@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-serif-elegant: "Cormorant Garamond", Georgia, serif;
+  --font-sans-premium: "Plus Jakarta Sans", Inter, sans-serif;
+
+  --color-gold-accent: #B8966C;
+  --color-gold-hover:  #A58259;
+  --color-cream-bg:    #FAF6F0;
+  --color-cream-card:  #F1ECE5;
+  --color-forest-green:#04231E;
+}
+
+:root {
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #111827;
+  background-color: #FAF6F0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Float animation for hero badge */
+@keyframes float-badge {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float-badge 4s ease-in-out infinite;
+}
