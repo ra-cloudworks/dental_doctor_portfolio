@@ -15,9 +15,9 @@ export default function Footer() {
   const quickLinks = [
     { label: 'Clinical Profile',   href: '/#clinical' },
     { label: 'Specialties',        href: '/specialties' },
-    { label: 'Implantology',       href: '/implantology' },
-    { label: 'Clinical Gallery',   href: '/#gallery' },
-    { label: 'Patient Resources',  href: '/#resources' },
+    { label: 'Implantology',       href: '/specialties#implantology' },
+    { label: 'Clinical Gallery',   href: '/gallery' },
+    { label: 'Patient Resources',  href: '/book#faq' },
   ];
 
   return (

@@ -36,6 +36,7 @@ export default function CredentialsSection() {
 
   return (
     <section
+      id="clinical"
       className="py-24 px-6 sm:px-8 lg:px-16"
       style={{ backgroundColor: C.creamBg, fontFamily: C.sans, borderBottom: '1px solid rgba(4,35,30,0.06)' }}
     >

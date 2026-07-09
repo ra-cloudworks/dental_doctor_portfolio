@@ -15,9 +15,9 @@ export default function Navbar() {
   const menuItems = [
     { label: 'CLINICAL PROFILE', href: '/#clinical' },
     { label: 'SPECIALTIES',      href: '/specialties' },
-    { label: 'IMPLANTOLOGY',     href: '/implantology' },
-    { label: 'CLINICAL GALLERY', href: '/#gallery' },
-    { label: 'PATIENT RESOURCES',href: '/#resources' },
+    { label: 'IMPLANTOLOGY',     href: '/specialties#implantology' },
+    { label: 'CLINICAL GALLERY', href: '/gallery' },
+    { label: 'PATIENT RESOURCES',href: '/book#faq' },
   ];
 
   return (
@@ -82,14 +82,15 @@ export default function Navbar() {
 
         {/* Book button */}
         <div className="hidden md:block flex-shrink-0">
-          <button
-            className="font-bold py-2.5 px-6 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white"
+          <Link
+            to="/book"
+            className="inline-block font-bold py-2.5 px-6 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
             style={{ backgroundColor: C.forestGreen }}
             onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
             onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
             BOOK CONSULTATION
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -115,12 +116,14 @@ export default function Navbar() {
             </li>
           ))}
           <li className="pt-2 pb-1">
-            <button
-              className="w-full font-bold py-3 px-6 rounded-full text-[11px] tracking-widest uppercase text-white"
+            <Link
+              to="/book"
+              className="block w-full font-bold py-3 px-6 rounded-full text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
               style={{ backgroundColor: C.forestGreen }}
+              onClick={() => setIsOpen(false)}
             >
               BOOK CONSULTATION
-            </button>
+            </Link>
           </li>
         </ul>
       </div>

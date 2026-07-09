@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import beforeAfterImg from '../../../assets/before_after_showcase.png';
 
 const C = {
   forestGreen: 'var(--color-forest-green)',
@@ -36,8 +38,9 @@ export default function SuccessStories() {
             </p>
           </div>
           <div className="flex-shrink-0">
-            <button
-              className="font-bold py-3 px-6 rounded-full transition-all duration-300 hover:shadow-md text-[10px] tracking-widest uppercase bg-transparent"
+            <Link
+              to="/gallery"
+              className="inline-block font-bold py-3 px-6 rounded-full transition-all duration-300 hover:shadow-md text-[10px] tracking-widest uppercase bg-transparent text-center cursor-pointer"
               style={{ border: '1px solid rgba(184,150,108,0.45)', color: C.gold }}
               onMouseEnter={e => {
                 e.currentTarget.style.backgroundColor = C.gold;
@@ -49,7 +52,7 @@ export default function SuccessStories() {
               }}
             >
               VIEW FULL CLINICAL GALLERY
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -67,7 +70,7 @@ export default function SuccessStories() {
               style={{ border: '1px solid rgba(255,255,255,0.10)', backgroundColor: C.forestGreen }}
             >
               <img
-                src="/src/assets/before_after_showcase.png"
+                src={beforeAfterImg}
                 alt="Before and after dental restoration"
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
               />

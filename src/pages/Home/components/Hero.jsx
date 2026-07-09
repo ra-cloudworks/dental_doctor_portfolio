@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import profileImg from '../../../assets/profile.jpeg';
 
 export default function HeroPage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -54,17 +56,19 @@ export default function HeroPage() {
 
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <button
-                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white"
+              <Link
+                to="/book"
+                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
                 style={{ backgroundColor: 'var(--color-forest-green)' }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
                 onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
                 BOOK A CONSULTATION
-              </button>
+              </Link>
 
-              <button
-                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent"
+              <Link
+                to="/gallery"
+                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent text-center cursor-pointer"
                 style={{ border: '1px solid var(--color-gold-accent)', color: 'var(--color-gold-accent)' }}
                 onMouseEnter={e => {
                   e.currentTarget.style.backgroundColor = 'var(--color-gold-accent)';
@@ -76,7 +80,7 @@ export default function HeroPage() {
                 }}
               >
                 VIEW SUCCESS STORIES
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -103,7 +107,7 @@ export default function HeroPage() {
                 style={{ backgroundColor: 'var(--color-cream-card)' }}
               >
                 <img
-                  src="/src/assets/profile.jpeg"
+                  src={profileImg}
                   alt="Dr. Chandrika Lakshmi Popuri"
                   className="w-full h-auto object-cover"
                 />

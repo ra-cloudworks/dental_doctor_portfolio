@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import implantImg from '../../../assets/implant_showcase.png';
 
 /* ── colour / font helpers ──────────────────────────────── */
 const C = {
@@ -44,7 +45,7 @@ export default function CoreSpecialties() {
 
           {/* Card 1 — Advanced Dental Implants  (double-wide) */}
           <Link
-            to="/implantology"
+            to="/specialties#implantology"
             className={`lg:col-span-2 rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col md:flex-row justify-between items-center gap-8 overflow-hidden group text-left ${fade()}`}
             style={{ background: '#fff', border: '1px solid rgba(4,35,30,0.06)' }}
           >
@@ -73,7 +74,7 @@ export default function CoreSpecialties() {
               style={{ backgroundColor: C.forestGreen }}
             >
               <img
-                src="/src/assets/implant_showcase.png"
+                src={implantImg}
                 alt="Dental Implant"
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
               />

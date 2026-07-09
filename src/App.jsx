@@ -1,35 +1,23 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Navbar from './components/nav'
-import HeroPage from './components/heropage'
-import StatsSection from './components/StatSection'
-import CoreSpecialties from './components/CoreSpecialties'
-import CredentialsSection from './components/CredentialsSection'
-import SuccessStories from './components/SuccessStories'
-import CTASection from './components/CTASection'
-import Specialties from './components/Specialties'
-import Implantology from './components/Implantology'
+import Navbar from './components/Navbar'
+import ScrollToAnchor from './components/ScrollToAnchor'
 import Footer from './components/Footer'
-
-const HomePage = () => (
-  <>
-    <HeroPage />
-    <StatsSection />
-    <CoreSpecialties />
-    <CredentialsSection />
-    <SuccessStories />
-    <CTASection />
-  </>
-)
+import Home from './pages/Home/Home'
+import Specialties from './pages/Specialties/Specialties'
+import Gallery from './pages/Gallery/Gallery'
+import Booking from './pages/Booking/Booking'
 
 const App = () => {
   return (
     <Router>
+      <ScrollToAnchor />
       <Navbar />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Home />} />
         <Route path="/specialties" element={<Specialties />} />
-        <Route path="/implantology" element={<Implantology />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/book" element={<Booking />} />
       </Routes>
       <Footer />
     </Router>

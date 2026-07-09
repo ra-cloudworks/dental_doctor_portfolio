@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const C = {
   creamBg:     'var(--color-cream-bg)',
@@ -37,14 +38,15 @@ export default function CTASection() {
           </p>
 
           <div className="pt-2">
-            <button
-              className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[10px] tracking-widest uppercase text-white"
+            <Link
+              to="/book"
+              className="inline-block font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[10px] tracking-widest uppercase text-white text-center cursor-pointer"
               style={{ backgroundColor: C.forestGreen }}
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
               SCHEDULE INITIAL CONSULTATION
-            </button>
+            </Link>
           </div>
         </div>
       </div>
