@@ -13,7 +13,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { label: 'CLINICAL PROFILE', href: '/#clinical' },
+    { label: 'CLINICAL PROFILE', href: '/' },
     { label: 'SPECIALTIES',      href: '/specialties' },
     { label: 'IMPLANTOLOGY',     href: '/specialties#implantology' },
     { label: 'CLINICAL GALLERY', href: '/gallery' },
