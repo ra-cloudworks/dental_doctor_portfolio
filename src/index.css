@@ -21,6 +21,15 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* CSS Custom Properties for inline style usage */
+  --color-gold-accent:  #B8966C;
+  --color-gold-hover:   #A58259;
+  --color-cream-bg:     #FAF6F0;
+  --color-cream-card:   #F1ECE5;
+  --color-forest-green: #04231E;
+  --font-serif-elegant: "Cormorant Garamond", Georgia, serif;
+  --font-sans-premium:  "Plus Jakarta Sans", Inter, sans-serif;
 }
 
 body {

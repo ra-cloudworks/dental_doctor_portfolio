@@ -2,17 +2,27 @@ import { useState, useEffect } from 'react';
 
 export default function StatsSection() {
   const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
-
-  const stats = [
+  const [stats, setStats] = useState([
     { value: '500+', label: 'Restored Smiles' },
     { value: '15+',  label: 'Years Experience' },
     { value: '2.5k', label: 'Dental Implants' },
     { value: '100%', label: 'Clinical Precision' },
-  ];
+  ]);
+
+  useEffect(() => {
+    setIsVisible(true);
+    fetch('/api/stats')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to load stats');
+      })
+      .then(data => {
+        if (data && data.length > 0) {
+          setStats(data);
+        }
+      })
+      .catch(err => console.error('Error fetching stats:', err));
+  }, []);
 
   return (
     <section
@@ -50,3 +60,4 @@ export default function StatsSection() {
     </section>
   );
 }
+

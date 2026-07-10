@@ -1,13 +1,36 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import profileImg from '../../../assets/profile.jpeg';
+import profileImgFallback from '../../../assets/profile.jpeg';
 
 export default function HeroPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const [content, setContent] = useState({
+    hero_badge: 'BOARD CERTIFIED PROSTHODONTIST',
+    hero_title_left: 'Precision Restorative Care for a ',
+    hero_title_gold: 'Lifetime of',
+    hero_title_right: 'Smiles.',
+    hero_desc: 'Specializing in advanced prosthodontics and implantology to restore function and aesthetic perfection through clinically-driven surgical precision.',
+    hero_profile_img: '',
+    hero_badge_title: 'MDS PROSTHODONTICS',
+    hero_badge_desc: 'Precision Certified Specialist',
+  });
 
   useEffect(() => {
     setIsVisible(true);
+    fetch('/api/content')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to load content');
+      })
+      .then(data => {
+        if (data && data.hero_badge) {
+          setContent(data);
+        }
+      })
+      .catch(err => console.error('Error fetching hero content:', err));
   }, []);
+
+  const imageSrc = content.hero_profile_img || profileImgFallback;
 
   return (
     <section
@@ -32,7 +55,7 @@ export default function HeroPage() {
                 color: 'var(--color-forest-green)',
               }}
             >
-              BOARD CERTIFIED PROSTHODONTIST
+              {content.hero_badge}
             </span>
 
             {/* Heading */}
@@ -40,18 +63,17 @@ export default function HeroPage() {
               className="text-4xl sm:text-5xl lg:text-[56px] font-normal leading-tight tracking-wide"
               style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-forest-green)' }}
             >
-              Precision Restorative Care for a{' '}
+              {content.hero_title_left}
               <span style={{ color: 'var(--color-gold-accent)', fontStyle: 'italic' }}>
-                Lifetime of
+                {content.hero_title_gold}
               </span>
               <br />
-              Smiles.
+              {content.hero_title_right}
             </h1>
 
             {/* Description */}
             <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-lg font-light">
-              Specializing in advanced prosthodontics and implantology to restore function and
-              aesthetic perfection through clinically-driven surgical precision.
+              {content.hero_desc}
             </p>
 
             {/* Buttons */}
@@ -103,13 +125,13 @@ export default function HeroPage() {
 
               {/* Profile image */}
               <div
-                className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"
+                className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
                 style={{ backgroundColor: 'var(--color-cream-card)' }}
               >
                 <img
-                  src={profileImg}
+                  src={imageSrc}
                   alt="Dr. Chandrika Lakshmi Popuri"
-                  className="w-full h-auto object-cover"
+                  className="w-full h-auto object-cover aspect-[4/5]"
                 />
               </div>
 
@@ -130,13 +152,13 @@ export default function HeroPage() {
                   </div>
                   <div>
                     <h3
-                      className="font-bold text-[11px] tracking-widest uppercase"
+                      className="font-bold text-[11px] tracking-widest uppercase text-left"
                       style={{ color: 'var(--color-forest-green)' }}
                     >
-                      MDS PROSTHODONTICS
+                      {content.hero_badge_title}
                     </h3>
-                    <p className="text-gray-500 text-[10px] mt-0.5 leading-tight">
-                      Precision Certified Specialist
+                    <p className="text-gray-500 text-[10px] mt-0.5 leading-tight text-left">
+                      {content.hero_badge_desc}
                     </p>
                   </div>
                 </div>
@@ -149,3 +171,4 @@ export default function HeroPage() {
     </section>
   );
 }
+

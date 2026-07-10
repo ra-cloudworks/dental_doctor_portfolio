@@ -11,9 +11,7 @@ const C = {
 
 export default function CredentialsSection() {
   const [vis, setVis] = useState(false);
-  useEffect(() => { setVis(true); }, []);
-
-  const timelineItems = [
+  const [timelineItems, setTimelineItems] = useState([
     {
       tag: 'MDS – MASTER OF DENTAL SURGERY (2016)',
       title: 'Prosthodontics & Crown and Bridge',
@@ -32,7 +30,39 @@ export default function CredentialsSection() {
       institution: 'National Prosthodontics Conference',
       details: 'Received for research in advanced restorative techniques and implant protocols.',
     },
-  ];
+  ]);
+
+  const [content, setContent] = useState({
+    commit_title: 'Commitment to Surgical Precision & Lifelong Learning',
+    commit_desc: 'Dr. Popuri combines her profound academic background with over 10 years of hands-on clinical experience, including leadership roles at municipal hospitals and national dental clinics, to deliver results that are both functional and biologically sound.',
+    commit_badge1_val: 'Top 1%',
+    commit_badge1_lbl: 'Fellowship Graduates',
+    commit_badge2_val: 'Global',
+    commit_badge2_lbl: 'Implantology Fellowship',
+  });
+
+  useEffect(() => {
+    setVis(true);
+    // Fetch timeline credentials
+    fetch('/api/timeline')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.length > 0) {
+          setTimelineItems(data);
+        }
+      })
+      .catch(err => console.error('Error fetching credentials timeline:', err));
+
+    // Fetch dynamic content for bio section
+    fetch('/api/content')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.commit_title) {
+          setContent(prev => ({ ...prev, ...data }));
+        }
+      })
+      .catch(err => console.error('Error fetching bio commitment settings:', err));
+  }, []);
 
   return (
     <section
@@ -87,20 +117,20 @@ export default function CredentialsSection() {
                   />
 
                   <div
-                    className="text-[10px] font-bold tracking-widest uppercase"
+                    className="text-[10px] font-bold tracking-widest uppercase text-left"
                     style={{ color: C.gold }}
                   >
                     {item.tag}
                   </div>
 
                   <h3
-                    className="text-lg sm:text-xl font-normal leading-snug tracking-wide"
+                    className="text-lg sm:text-xl font-normal leading-snug tracking-wide text-left"
                     style={{ fontFamily: C.serif, color: C.forestGreen }}
                   >
                     {item.title}
                   </h3>
 
-                  <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed max-w-xl">
+                  <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed max-w-xl text-left">
                     <span
                       className="font-semibold block mb-0.5"
                       style={{ color: 'rgba(4,35,30,0.75)' }}
@@ -147,13 +177,11 @@ export default function CredentialsSection() {
                 className="text-2xl font-normal tracking-wide leading-snug"
                 style={{ fontFamily: C.serif, color: C.forestGreen }}
               >
-                Commitment to Surgical Precision &amp; Lifelong Learning
+                {content.commit_title}
               </h3>
 
               <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed">
-                Dr. Popuri combines her profound academic background with over 10 years of hands-on
-                clinical experience, including leadership roles at municipal hospitals and national
-                dental clinics, to deliver results that are both functional and biologically sound.
+                {content.commit_desc}
               </p>
 
               {/* Performance badges */}
@@ -162,8 +190,8 @@ export default function CredentialsSection() {
                 style={{ borderTop: '1px solid rgba(4,35,30,0.10)' }}
               >
                 {[
-                  { value: 'Top 1%', label: 'Fellowship Graduates' },
-                  { value: 'Global', label: 'Implantology Fellowship' },
+                  { value: content.commit_badge1_val, label: content.commit_badge1_lbl },
+                  { value: content.commit_badge2_val, label: content.commit_badge2_lbl },
                 ].map((b, i) => (
                   <div
                     key={i}
@@ -190,3 +218,4 @@ export default function CredentialsSection() {
     </section>
   );
 }
+

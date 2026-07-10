@@ -17,18 +17,32 @@ const BADGE_ITEMS = [
   { badge: 'CAD/CAM Integrated', icon: '⚙' },
 ];
 
-const SERVICES = [
-  { title: 'Complete Mouth Rehabilitation', desc: 'Comprehensive restoration of entire dentition with precision and aesthetics.', icon: '🦷' },
-  { title: 'Dental Implants',              desc: 'State-of-the-art implant placement with osseointegration techniques.', icon: '🔧', link: '#implantology' },
-  { title: 'Prosthodontic Restorations',   desc: 'Crowns, bridges, and dentures with superior aesthetics and function.', icon: '✨' },
-  { title: 'Digital Smile Design',         desc: 'Smile visualization and planning using advanced digital technology.', icon: '💻' },
-  { title: 'Bone Grafting',                desc: 'Surgical augmentation for optimal implant placement and longevity.', icon: '🧬' },
-  { title: 'Aesthetic Dentistry',          desc: 'Cosmetic solutions for a beautiful and natural-looking smile.', icon: '💎' },
-];
-
 export default function Specialties() {
   const [vis, setVis] = useState(false);
-  useEffect(() => { setVis(true); }, []);
+  const [services, setServices] = useState([
+    { title: 'Complete Mouth Rehabilitation', desc: 'Comprehensive restoration of entire dentition with precision and aesthetics.', icon: '🦷', link: '' },
+    { title: 'Dental Implants',              desc: 'State-of-the-art implant placement with osseointegration techniques.', icon: '🔧', link: '#implantology' },
+    { title: 'Prosthodontic Restorations',   desc: 'Crowns, bridges, and dentures with superior aesthetics and function.', icon: '✨', link: '' },
+    { title: 'Digital Smile Design',         desc: 'Smile visualization and planning using advanced digital technology.', icon: '💻', link: '' },
+    { title: 'Bone Grafting',                desc: 'Surgical augmentation for optimal implant placement and longevity.', icon: '🧬', link: '' },
+    { title: 'Aesthetic Dentistry',          desc: 'Cosmetic solutions for a beautiful and natural-looking smile.', icon: '💎', link: '' },
+  ]);
+
+  useEffect(() => {
+    setVis(true);
+    fetch('/api/specialties')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to load specialties');
+      })
+      .then(data => {
+        if (data && data.length > 0) {
+          setServices(data);
+        }
+      })
+      .catch(err => console.error('Error fetching specialties:', err));
+  }, []);
+
 
   return (
     <div style={{ backgroundColor: C.creamBg, fontFamily: C.sans }}>
@@ -141,7 +155,7 @@ export default function Specialties() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {SERVICES.map((s, i) => {
+            {services.map((s, i) => {
               const cardClass = `rounded-2xl p-8 shadow-md hover:shadow-xl transition-all duration-500 hover:-translate-y-2 group ${
                 vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`;

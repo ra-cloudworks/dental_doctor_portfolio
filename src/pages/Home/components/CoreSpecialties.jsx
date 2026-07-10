@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import implantImg from '../../../assets/implant_showcase.png';
+import implantImgFallback from '../../../assets/implant_showcase.png';
 
-/* ── colour / font helpers ──────────────────────────────── */
 const C = {
   creamBg:     'var(--color-cream-bg)',
   creamCard:   'var(--color-cream-card)',
@@ -15,10 +14,54 @@ const C = {
 
 export default function CoreSpecialties() {
   const [vis, setVis] = useState(false);
-  useEffect(() => { setVis(true); }, []);
+  const [specialties, setSpecialties] = useState([]);
+  const [content, setContent] = useState({
+    implant_title: 'Advanced Dental Implantology',
+    implant_desc: 'Restoration of single or multiple missing teeth with elite osseointegrated titanium implants. Focus on long-term stability and bone preservation.'
+  });
+
+  useEffect(() => {
+    setVis(true);
+    // Fetch specialties
+    fetch('/api/specialties')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.length > 0) setSpecialties(data);
+      })
+      .catch(err => console.error('Error fetching specialties:', err));
+
+    // Fetch dynamic content
+    fetch('/api/content')
+      .then(res => res.json())
+      .then(data => {
+        if (data) setContent(prev => ({ ...prev, ...data }));
+      })
+      .catch(err => console.error('Error fetching settings content:', err));
+  }, []);
 
   const fade = (delay = 0) =>
     `transition-all duration-700 transform ${vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`;
+
+  // Find corresponding items from database or fall back
+  const implantSpecialty = specialties.find(s => s.title.toLowerCase().includes('implant')) || {
+    title: 'Advanced Dental Implants',
+    desc: 'Restoration of single or multiple missing teeth with elite osseointegrated titanium implants. Focus on long-term stability and bone preservation.'
+  };
+
+  const cosmeticSpecialty = specialties.find(s => s.title.toLowerCase().includes('aesthetic') || s.title.toLowerCase().includes('cosmetic')) || {
+    title: 'Cosmetic Dentistry',
+    desc: 'Aesthetics and design utilizing premium veneers, inlays, and translucent crowns.'
+  };
+
+  const fullMouthSpecialty = specialties.find(s => s.title.toLowerCase().includes('mouth') || s.title.toLowerCase().includes('rehabilitation')) || {
+    title: 'Full-Mouth Rehabilitation',
+    desc: 'Complex reconstructive cases addressing occlusal wear, tooth loss, and jaw joint relationships.'
+  };
+
+  const generalSpecialty = specialties.find(s => s.title.toLowerCase().includes('restoration') || s.title.toLowerCase().includes('prosthodontic')) || {
+    title: 'Clinical Excellence',
+    desc: 'Case studies in full-mouth rehabilitation, implant-supported prosthetics, and digital workflows using state-of-the-art technology for minimal interventions.'
+  };
 
   return (
     <section
@@ -54,11 +97,10 @@ export default function CoreSpecialties() {
                 className="text-2xl font-normal tracking-wide"
                 style={{ fontFamily: C.serif, color: C.forestGreen }}
               >
-                Advanced Dental Implants
+                {implantSpecialty.title}
               </h3>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light max-w-md">
-                Restoration of single or multiple missing teeth with elite osseointegrated titanium implants.
-                Focus on long-term stability and bone preservation.
+                {implantSpecialty.desc}
               </p>
               <div
                 className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 transition-colors duration-300"
@@ -74,7 +116,7 @@ export default function CoreSpecialties() {
               style={{ backgroundColor: C.forestGreen }}
             >
               <img
-                src={implantImg}
+                src={implantImgFallback}
                 alt="Dental Implant"
                 className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
               />
@@ -95,15 +137,15 @@ export default function CoreSpecialties() {
                   d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
             </div>
-            <div>
+            <div className="text-left">
               <h3
                 className="text-xl font-normal mb-3 tracking-wide text-white"
                 style={{ fontFamily: C.serif }}
               >
-                Cosmetic Dentistry
+                {cosmeticSpecialty.title}
               </h3>
               <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-light">
-                Aesthetics and design utilizing premium veneers, inlays, and translucent crowns.
+                {cosmeticSpecialty.desc}
               </p>
             </div>
           </div>
@@ -122,15 +164,15 @@ export default function CoreSpecialties() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <div>
+            <div className="text-left">
               <h3
                 className="text-xl font-normal mb-3 tracking-wide"
                 style={{ fontFamily: C.serif, color: C.forestGreen }}
               >
-                Full-Mouth Rehabilitation
+                {fullMouthSpecialty.title}
               </h3>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">
-                Complex reconstructive cases addressing occlusal wear, tooth loss, and jaw joint relationships.
+                {fullMouthSpecialty.desc}
               </p>
             </div>
           </div>
@@ -145,11 +187,10 @@ export default function CoreSpecialties() {
                 className="text-2xl font-normal tracking-wide"
                 style={{ fontFamily: C.serif, color: C.forestGreen }}
               >
-                Clinical Excellence
+                {generalSpecialty.title}
               </h3>
               <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">
-                Case studies in full-mouth rehabilitation, implant-supported prosthetics, and digital workflows
-                using state-of-the-art technology for minimal interventions.
+                {generalSpecialty.desc}
               </p>
             </div>
             {/* Decorative overlapping circles */}
@@ -174,3 +215,4 @@ export default function CoreSpecialties() {
     </section>
   );
 }
+

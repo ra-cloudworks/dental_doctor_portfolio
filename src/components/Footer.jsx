@@ -10,7 +10,27 @@ const C = {
 
 export default function Footer() {
   const [vis, setVis] = useState(false);
-  useEffect(() => { setVis(true); }, []);
+  const [content, setContent] = useState({
+    clinic_phone: '+91 (0) 40 2345 6789',
+    clinic_location: 'Specialist Restorative Wing, Premium Dental Care, Jubilee Hills, Hyderabad, Telangana',
+    clinic_email: 'contact@drpopuri.com',
+    footer_bio_summary: 'Specialist Prosthodontist specializing in advanced restorations and oral implantology.'
+  });
+
+  useEffect(() => {
+    setVis(true);
+    fetch('/api/content')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Failed to load content');
+      })
+      .then(data => {
+        if (data && data.clinic_phone) {
+          setContent(prev => ({ ...prev, ...data }));
+        }
+      })
+      .catch(err => console.error('Error fetching footer content:', err));
+  }, []);
 
   const quickLinks = [
     { label: 'Clinical Profile',   href: '/#clinical' },
@@ -25,7 +45,7 @@ export default function Footer() {
 
       {/* ── Main grid ── */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-16 lg:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12 text-left">
 
           {/* Doctor info */}
           <div
@@ -40,13 +60,13 @@ export default function Footer() {
               Dr. Chandrika Lakshmi Popuri
             </h2>
             <p className="text-sm font-light leading-relaxed max-w-sm" style={{ color: 'rgba(255,255,255,0.65)' }}>
-              Specialist Prosthodontist specializing in advanced restorations and oral implantology.
+              {content.footer_bio_summary}
             </p>
             {/* Social icons */}
             <div className="flex gap-3">
               {[
                 { title: 'Share', path: 'M8.684 10.742l5.053-2.527m0 7.57l-5.053-2.527m0 0A3.001 3.001 0 118 8a3.001 3.001 0 01.82 5.093zm8.36 4.647a3 3 0 11-6 0 3 3 0 016 0zM16 8a3 3 0 11-6 0 3 3 0 016 0z', href: '#share' },
-                { title: 'Email', path: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', href: 'mailto:contact@drpopuri.com' },
+                { title: 'Email', path: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', href: `mailto:${content.clinic_email}` },
               ].map(s => (
                 <a
                   key={s.title}
@@ -120,8 +140,7 @@ export default function Footer() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <p className="text-xs sm:text-sm font-light leading-relaxed" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                Specialist Restorative Wing, Premium Dental Care,
-                Jubilee Hills, Hyderabad, Telangana
+                {content.clinic_location}
               </p>
             </div>
 
@@ -131,13 +150,13 @@ export default function Footer() {
                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
               <a
-                href="tel:+914023456789"
+                href={`tel:${content.clinic_phone.replace(/\s+/g, '')}`}
                 className="text-xs sm:text-sm font-light transition-colors duration-200"
                 style={{ color: 'rgba(255,255,255,0.65)' }}
                 onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.65)')}
               >
-                +91 (0) 40 2345 6789
+                {content.clinic_phone}
               </a>
             </div>
           </div>
