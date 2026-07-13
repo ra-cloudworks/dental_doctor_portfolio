@@ -247,6 +247,46 @@ app.post('/api/stats', async (req, res) => {
   }
 });
 
+// 7. Patient Resources Endpoints (CRUD)
+app.get('/api/patient-resources', async (req, res) => {
+  try {
+    const rows = await query.all('SELECT * FROM patient_resources ORDER BY sort_order ASC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/patient-resources', async (req, res) => {
+  try {
+    const { id, title, category, description, icon, link, sort_order } = req.body;
+    if (id) {
+      await query.run(
+        'UPDATE patient_resources SET title = ?, category = ?, description = ?, icon = ?, link = ?, sort_order = ? WHERE id = ?',
+        [title, category, description, icon || '', link || '', sort_order || 0, id]
+      );
+      res.json({ success: true, message: 'Patient resource updated' });
+    } else {
+      const result = await query.run(
+        'INSERT INTO patient_resources (title, category, description, icon, link, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+        [title, category, description, icon || '', link || '', sort_order || 0]
+      );
+      res.json({ success: true, id: result.id, message: 'Patient resource created' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/patient-resources/:id', async (req, res) => {
+  try {
+    await query.run('DELETE FROM patient_resources WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Patient resource deleted' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

@@ -1,9 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import profileImgFallback from '../../../assets/profile.jpeg';
 
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.15 } },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] } },
+};
+
 export default function HeroPage() {
-  const [isVisible, setIsVisible] = useState(false);
   const [content, setContent] = useState({
     hero_badge: 'BOARD CERTIFIED PROSTHODONTIST',
     hero_title_left: 'Precision Restorative Care for a ',
@@ -16,7 +26,6 @@ export default function HeroPage() {
   });
 
   useEffect(() => {
-    setIsVisible(true);
     fetch('/api/content')
       .then(res => {
         if (res.ok) return res.json();
@@ -37,29 +46,40 @@ export default function HeroPage() {
       className="pt-20 pb-28 px-6 sm:px-8 lg:px-16 relative overflow-hidden"
       style={{ backgroundColor: 'var(--color-cream-bg)', fontFamily: 'var(--font-sans-premium)' }}
     >
+      {/* Ambient background orbs */}
+      <motion.div
+        className="absolute top-20 left-10 w-72 h-72 rounded-full blur-3xl opacity-20 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(184,150,108,0.3), transparent)' }}
+        animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        className="absolute bottom-10 right-10 w-96 h-96 rounded-full blur-3xl opacity-10 pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(4,35,30,0.2), transparent)' }}
+        animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
 
-          {/* ── Left Content ── */}
-          <div
-            className={`lg:col-span-7 space-y-8 transition-all duration-1000 transform ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
+          {/* Left Content */}
+          <motion.div
+            className="lg:col-span-7 space-y-8"
+            variants={stagger}
+            initial="hidden"
+            animate="visible"
           >
-            {/* Badge */}
-            <span
+            <motion.span
+              variants={fadeUp}
               className="inline-block text-[10px] font-bold px-4 py-2 rounded-full tracking-widest uppercase shadow-sm border"
-              style={{
-                background: '#fff',
-                borderColor: 'rgba(4,35,30,0.12)',
-                color: 'var(--color-forest-green)',
-              }}
+              style={{ background: '#fff', borderColor: 'rgba(4,35,30,0.12)', color: 'var(--color-forest-green)' }}
             >
               {content.hero_badge}
-            </span>
+            </motion.span>
 
-            {/* Heading */}
-            <h1
+            <motion.h1
+              variants={fadeUp}
               className="text-4xl sm:text-5xl lg:text-[56px] font-normal leading-tight tracking-wide"
               style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-forest-green)' }}
             >
@@ -69,76 +89,73 @@ export default function HeroPage() {
               </span>
               <br />
               {content.hero_title_right}
-            </h1>
+            </motion.h1>
 
-            {/* Description */}
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-lg font-light">
+            <motion.p
+              variants={fadeUp}
+              className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-lg font-light"
+            >
               {content.hero_desc}
-            </p>
+            </motion.p>
 
-            {/* Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-2">
               <Link
                 to="/book"
                 className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
                 style={{ backgroundColor: 'var(--color-forest-green)' }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
               >
                 BOOK A CONSULTATION
               </Link>
-
               <Link
                 to="/gallery"
-                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent text-center cursor-pointer"
+                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent text-center cursor-pointer group"
                 style={{ border: '1px solid var(--color-gold-accent)', color: 'var(--color-gold-accent)' }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-gold-accent)';
-                  e.currentTarget.style.color = '#fff';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--color-gold-accent)';
-                }}
               >
-                VIEW SUCCESS STORIES
+                <span className="group-hover:text-white transition-colors duration-300">VIEW SUCCESS STORIES</span>
               </Link>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
-          {/* ── Right Image ── */}
-          <div
-            className={`lg:col-span-5 relative transition-all duration-1000 delay-300 transform ${
-              isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
+          {/* Right Image */}
+          <motion.div
+            className="lg:col-span-5 relative"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, delay: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           >
             <div className="relative max-w-md mx-auto">
-
-              {/* Dark green offset backdrop */}
-              <div
+              <motion.div
                 className="absolute inset-0 rounded-[2.5rem] shadow-xl"
-                style={{
-                  backgroundColor: 'var(--color-forest-green)',
-                  transform: 'translate(12px, 12px)',
-                }}
+                style={{ backgroundColor: 'var(--color-forest-green)' }}
+                initial={{ x: 12, y: 12 }}
+                animate={{ x: 12, y: 12 }}
+                whileHover={{ x: 16, y: 16 }}
+                transition={{ duration: 0.4 }}
               />
 
-              {/* Profile image */}
               <div
-                className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
+                className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10"
                 style={{ backgroundColor: 'var(--color-cream-card)' }}
               >
-                <img
+                <motion.img
                   src={imageSrc}
                   alt="Dr. Chandrika Lakshmi Popuri"
                   className="w-full h-auto object-cover aspect-[4/5]"
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.6 }}
                 />
               </div>
 
-              {/* Floating badge */}
-              <div
-                className="animate-float absolute -bottom-5 -left-5 z-20 bg-white rounded-2xl shadow-xl p-4 max-w-[260px]"
+              <motion.div
+                className="absolute -bottom-5 -left-5 z-20 bg-white rounded-2xl shadow-xl p-4 max-w-[260px]"
                 style={{ border: '1px solid rgba(184,150,108,0.4)' }}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+                transition={{
+                  opacity: { delay: 1, duration: 0.5 },
+                  scale: { delay: 1, duration: 0.5 },
+                  y: { delay: 1.5, duration: 4, repeat: Infinity, ease: 'easeInOut' }
+                }}
               >
                 <div className="flex items-start gap-3">
                   <div
@@ -151,24 +168,17 @@ export default function HeroPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3
-                      className="font-bold text-[11px] tracking-widest uppercase text-left"
-                      style={{ color: 'var(--color-forest-green)' }}
-                    >
+                    <h3 className="font-bold text-[11px] tracking-widest uppercase text-left" style={{ color: 'var(--color-forest-green)' }}>
                       {content.hero_badge_title}
                     </h3>
-                    <p className="text-gray-500 text-[10px] mt-0.5 leading-tight text-left">
-                      {content.hero_badge_desc}
-                    </p>
+                    <p className="text-gray-500 text-[10px] mt-0.5 leading-tight text-left">{content.hero_badge_desc}</p>
                   </div>
                 </div>
-              </div>
-
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>
   );
 }
-
