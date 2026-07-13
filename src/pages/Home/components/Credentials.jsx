@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import ScrollReveal from '../../../components/ScrollReveal';
 
 const C = {
   creamBg:     'var(--color-cream-bg)',
@@ -9,27 +11,14 @@ const C = {
   sans:        'var(--font-sans-premium)',
 };
 
+const DOT_SIZE = 16;
+const LINE_LEFT = 7;
+
 export default function CredentialsSection() {
-  const [vis, setVis] = useState(false);
   const [timelineItems, setTimelineItems] = useState([
-    {
-      tag: 'MDS – MASTER OF DENTAL SURGERY (2016)',
-      title: 'Prosthodontics & Crown and Bridge',
-      institution: 'Banasthali Institute of Dental Science and Hospital',
-      details: 'Specialized training in full-mouth rehabilitation and implant-supported restorations.',
-    },
-    {
-      tag: 'BDS – BACHELOR OF DENTAL SURGERY (2013)',
-      title: 'Clinical Foundation',
-      institution: 'Uttaranchal Institute of Dental Science and Hospital',
-      details: 'Distinguished academic record laying the foundation for restorative excellence.',
-    },
-    {
-      tag: 'AWARD & RECOGNITION',
-      title: 'Best Paper Award 2024',
-      institution: 'National Prosthodontics Conference',
-      details: 'Received for research in advanced restorative techniques and implant protocols.',
-    },
+    { tag: 'MDS – MASTER OF DENTAL SURGERY (2016)', title: 'Prosthodontics & Crown and Bridge', institution: 'Banasthali Institute of Dental Science and Hospital', details: 'Specialized training in full-mouth rehabilitation and implant-supported restorations.' },
+    { tag: 'BDS – BACHELOR OF DENTAL SURGERY (2013)', title: 'Clinical Foundation', institution: 'Uttaranchal Institute of Dental Science and Hospital', details: 'Distinguished academic record laying the foundation for restorative excellence.' },
+    { tag: 'AWARD & RECOGNITION', title: 'Best Paper Award 2024', institution: 'National Prosthodontics Conference', details: 'Received for research in advanced restorative techniques and implant protocols.' },
   ]);
 
   const [content, setContent] = useState({
@@ -42,175 +31,114 @@ export default function CredentialsSection() {
   });
 
   useEffect(() => {
-    setVis(true);
-    // Fetch timeline credentials
     fetch('/api/timeline')
       .then(res => res.json())
-      .then(data => {
-        if (data && data.length > 0) {
-          setTimelineItems(data);
-        }
-      })
+      .then(data => { if (data && data.length > 0) setTimelineItems(data); })
       .catch(err => console.error('Error fetching credentials timeline:', err));
 
-    // Fetch dynamic content for bio section
     fetch('/api/content')
       .then(res => res.json())
-      .then(data => {
-        if (data && data.commit_title) {
-          setContent(prev => ({ ...prev, ...data }));
-        }
-      })
+      .then(data => { if (data && data.commit_title) setContent(prev => ({ ...prev, ...data })); })
       .catch(err => console.error('Error fetching bio commitment settings:', err));
   }, []);
 
   return (
-    <section
-      id="clinical"
-      className="py-24 px-6 sm:px-8 lg:px-16"
-      style={{ backgroundColor: C.creamBg, fontFamily: C.sans, borderBottom: '1px solid rgba(4,35,30,0.06)' }}
-    >
+    <section id="clinical" className="py-24 px-6 sm:px-8 lg:px-16" style={{ backgroundColor: C.creamBg, fontFamily: C.sans, borderBottom: '1px solid rgba(4,35,30,0.06)' }}>
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
 
-          {/* ── Left: Timeline ── */}
-          <div
-            className={`lg:col-span-7 space-y-8 text-left transition-all duration-1000 transform ${
-              vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div className="space-y-3">
-              <h2
-                className="text-3xl sm:text-4xl font-normal tracking-wide"
-                style={{ fontFamily: C.serif, color: C.forestGreen }}
-              >
-                Professional Credentials
-              </h2>
-              <p className="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-xl font-light">
-                A career defined by academic rigor and a relentless pursuit of surgical excellence.
-              </p>
-            </div>
+          {/* Left: Timeline */}
+          <div className="lg:col-span-7 space-y-8">
+            <ScrollReveal>
+              <div className="space-y-3 text-left">
+                <h2 className="text-3xl sm:text-4xl font-normal tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>Professional Credentials</h2>
+                <p className="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-xl font-light">A career defined by academic rigor and a relentless pursuit of surgical excellence.</p>
+              </div>
+            </ScrollReveal>
 
-            {/* Vertical timeline */}
-            <div className="relative pl-8 pt-2 space-y-12">
-              {/* Line */}
+            <div className="relative pl-10 pt-2 space-y-10">
+              {/* Vertical line — centered on the dot position */}
               <div
-                className="absolute left-[9px] top-0 bottom-0 w-[1.5px]"
-                style={{ backgroundColor: 'rgba(4,35,30,0.12)' }}
+                className="absolute top-1 bottom-1 rounded-full"
+                style={{
+                  left: LINE_LEFT,
+                  width: 1.5,
+                  backgroundColor: 'rgba(4,35,30,0.12)',
+                }}
               />
 
               {timelineItems.map((item, i) => (
-                <div
-                  key={i}
-                  className={`relative space-y-2 transition-all duration-700 transform ${
-                    vis ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
-                  }`}
-                  style={{ transitionDelay: `${i * 150}ms` }}
-                >
-                  {/* Gold circle node */}
-                  <div
-                    className="absolute -left-[31px] top-1.5 w-[21px] h-[21px] rounded-full shadow-sm"
-                    style={{
-                      backgroundColor: C.gold,
-                      border: `4px solid ${C.creamBg}`,
-                    }}
-                  />
+                <ScrollReveal key={i} delay={i * 0.15} direction="left" x={40}>
+                  <div className="relative text-left">
+                    {/* Dot — vertically centered on the tag line */}
+                    <motion.div
+                      className="absolute rounded-full shadow-sm"
+                      style={{
+                        left: LINE_LEFT + 1.5 / 2 - DOT_SIZE / 2,
+                        top: 2,
+                        width: DOT_SIZE,
+                        height: DOT_SIZE,
+                        backgroundColor: C.gold,
+                        border: `3px solid ${C.creamBg}`,
+                      }}
+                      whileInView={{ scale: [0, 1.3, 1] }}
+                      transition={{ delay: i * 0.15 + 0.3, duration: 0.5 }}
+                      viewport={{ once: true }}
+                    />
 
-                  <div
-                    className="text-[10px] font-bold tracking-widest uppercase text-left"
-                    style={{ color: C.gold }}
-                  >
-                    {item.tag}
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: C.gold }}>{item.tag}</div>
+                      <h3 className="text-lg sm:text-xl font-normal leading-snug tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>{item.title}</h3>
+                      <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed max-w-xl">
+                        <span className="font-semibold block mb-0.5" style={{ color: 'rgba(4,35,30,0.75)' }}>{item.institution}</span>
+                        {item.details}
+                      </p>
+                    </div>
                   </div>
-
-                  <h3
-                    className="text-lg sm:text-xl font-normal leading-snug tracking-wide text-left"
-                    style={{ fontFamily: C.serif, color: C.forestGreen }}
-                  >
-                    {item.title}
-                  </h3>
-
-                  <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed max-w-xl text-left">
-                    <span
-                      className="font-semibold block mb-0.5"
-                      style={{ color: 'rgba(4,35,30,0.75)' }}
-                    >
-                      {item.institution}
-                    </span>
-                    {item.details}
-                  </p>
-                </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
 
-          {/* ── Right: Commitment card ── */}
-          <div
-            className={`lg:col-span-5 transition-all duration-1000 delay-300 transform ${
-              vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-            }`}
-          >
-            <div
-              className="rounded-[2.5rem] p-10 sm:p-12 shadow-md text-left space-y-6"
-              style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)' }}
-            >
-              {/* Graduation-cap icon */}
+          {/* Right: Commitment card — sticky so it stays visible while scrolling the timeline */}
+          <div className="lg:col-span-5">
+            <ScrollReveal delay={0.3} direction="right" x={40}>
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
-                style={{
-                  background: 'rgba(184,150,108,0.12)',
-                  border: '1px solid rgba(184,150,108,0.28)',
-                  color: C.gold,
-                }}
+                className="lg:sticky lg:top-28 rounded-[2rem] p-8 sm:p-10 shadow-md text-left space-y-5"
+                style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)' }}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                    d="M12 14l9-5-9-5-9 5 9 5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                    d="M12 14v6" />
-                </svg>
-              </div>
+                <motion.div
+                  className="w-11 h-11 rounded-full flex items-center justify-center shadow-sm"
+                  style={{ background: 'rgba(184,150,108,0.12)', border: '1px solid rgba(184,150,108,0.28)', color: C.gold }}
+                  whileInView={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.8, delay: 0.5 }}
+                  viewport={{ once: true }}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 14v6" />
+                  </svg>
+                </motion.div>
 
-              <h3
-                className="text-2xl font-normal tracking-wide leading-snug"
-                style={{ fontFamily: C.serif, color: C.forestGreen }}
-              >
-                {content.commit_title}
-              </h3>
+                <h3 className="text-xl sm:text-2xl font-normal tracking-wide leading-snug" style={{ fontFamily: C.serif, color: C.forestGreen }}>{content.commit_title}</h3>
+                <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed">{content.commit_desc}</p>
 
-              <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed">
-                {content.commit_desc}
-              </p>
-
-              {/* Performance badges */}
-              <div
-                className="grid grid-cols-2 gap-4 pt-6"
-                style={{ borderTop: '1px solid rgba(4,35,30,0.10)' }}
-              >
-                {[
-                  { value: content.commit_badge1_val, label: content.commit_badge1_lbl },
-                  { value: content.commit_badge2_val, label: content.commit_badge2_lbl },
-                ].map((b, i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl p-4 shadow-sm flex flex-col justify-center"
-                    style={{ background: '#fff', border: '1px solid rgba(4,35,30,0.06)' }}
-                  >
-                    <span
-                      className="text-lg font-bold leading-tight"
-                      style={{ color: C.gold }}
+                <div className="grid grid-cols-2 gap-3 pt-5" style={{ borderTop: '1px solid rgba(4,35,30,0.10)' }}>
+                  {[{ value: content.commit_badge1_val, label: content.commit_badge1_lbl }, { value: content.commit_badge2_val, label: content.commit_badge2_lbl }].map((b, i) => (
+                    <motion.div
+                      key={i}
+                      className="rounded-2xl p-4 shadow-sm flex flex-col justify-center"
+                      style={{ background: '#fff', border: '1px solid rgba(4,35,30,0.06)' }}
+                      whileHover={{ y: -3, boxShadow: '0 8px 20px -4px rgba(4,35,30,0.1)' }}
                     >
-                      {b.value}
-                    </span>
-                    <span className="text-[10px] text-gray-500 font-semibold tracking-wider uppercase mt-1">
-                      {b.label}
-                    </span>
-                  </div>
-                ))}
+                      <span className="text-lg font-bold leading-tight" style={{ color: C.gold }}>{b.value}</span>
+                      <span className="text-[10px] text-gray-500 font-semibold tracking-wider uppercase mt-1">{b.label}</span>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
 
         </div>
@@ -218,4 +146,3 @@ export default function CredentialsSection() {
     </section>
   );
 }
-

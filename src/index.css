@@ -22,7 +22,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* CSS Custom Properties for inline style usage */
   --color-gold-accent:  #B8966C;
   --color-gold-hover:   #A58259;
   --color-cream-bg:     #FAF6F0;
@@ -49,4 +48,57 @@ body {
 }
 .animate-float {
   animation: float-badge 4s ease-in-out infinite;
+}
+
+/* Fade in */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
+
+/* Slide up stagger */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(184,150,108,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Glow pulse for gold accents */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(184,150,108,0); }
+  50% { box-shadow: 0 0 20px 4px rgba(184,150,108,0.15); }
+}
+.animate-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-cream-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-accent);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-hover);
 }

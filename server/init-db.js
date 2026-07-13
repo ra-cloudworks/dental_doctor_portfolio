@@ -64,11 +64,22 @@ async function seed() {
       label TEXT
     )`);
 
+    await runAsync(`CREATE TABLE IF NOT EXISTS patient_resources (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      category TEXT,
+      description TEXT,
+      icon TEXT,
+      link TEXT DEFAULT '',
+      sort_order INTEGER DEFAULT 0
+    )`);
+
     // 2. Clear existing entries to prevent duplicates (except settings where we replace)
     await runAsync('DELETE FROM specialties');
     await runAsync('DELETE FROM stats');
     await runAsync('DELETE FROM timeline_items');
     await runAsync('DELETE FROM gallery_cases');
+    await runAsync('DELETE FROM patient_resources');
 
     // 3. Seed Settings
     const initialSettings = [
@@ -103,7 +114,11 @@ async function seed() {
       { key: 'commit_badge1_lbl', value: 'Fellowship Graduates' },
       { key: 'commit_badge2_val', value: 'Global' },
       { key: 'commit_badge2_lbl', value: 'Implantology Fellowship' },
-      
+
+      { key: 'story_quote', value: 'The precision of Dr. Popuri\'s work is simply unmatched. After years of discomfort, my full-mouth reconstruction feels exactly like my natural teeth—only better. Her attention to detail gave me my life back.' },
+      { key: 'story_patient_name', value: 'Rajeswari Kumar' },
+      { key: 'story_patient_role', value: 'IMPLANT & PROSTHETIC PATIENT' },
+
       { key: 'clinic_phone', value: '+91 (0) 40 2345 6789' },
       { key: 'clinic_location', value: 'Specialist Restorative Wing, Premium Dental Care, Jubilee Hills, Hyderabad, Telangana' },
       { key: 'clinic_email', value: 'contact@drpopuri.com' },
@@ -235,6 +250,23 @@ async function seed() {
         (case_id, category, title, desc, beforeImage, afterImage, prosthetics, duration, material, featured) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [c.case_id, c.category, c.title, c.desc, c.beforeImage, c.afterImage, c.prosthetics, c.duration, c.material, c.featured]
+      );
+    }
+
+    // 8. Seed Patient Resources
+    const initialPatientResources = [
+      { title: 'What to Expect Before Your Implant Surgery', category: 'Pre-Op Instructions', description: 'A comprehensive guide covering dietary restrictions, medication adjustments, and preparation steps to ensure optimal outcomes for your dental implant procedure.', icon: '📋', link: '', sort_order: 1 },
+      { title: 'Post-Operative Care for Dental Implants', category: 'Post-Op Care', description: 'Detailed aftercare instructions including oral hygiene routines, dietary guidelines, and warning signs to watch for during your recovery period.', icon: '🩹', link: '', sort_order: 2 },
+      { title: 'Understanding the Implant Timeline', category: 'General Info', description: 'Learn about the stages of dental implant treatment from initial consultation through osseointegration to final crown placement.', icon: '⏱️', link: '', sort_order: 3 },
+      { title: 'FAQs About Prosthodontic Treatments', category: 'FAQ', description: 'Answers to the most commonly asked questions about crowns, bridges, veneers, and full-mouth rehabilitation procedures.', icon: '❓', link: '', sort_order: 4 },
+      { title: 'Payment & Insurance Information', category: 'General Info', description: 'Information about accepted insurance plans, financing options, and payment methods available at our clinic.', icon: '💳', link: '', sort_order: 5 },
+      { title: 'Preparing for Your First Consultation', category: 'Pre-Op Instructions', description: 'What to bring, medical records to prepare, and how to maximize your initial visit with Dr. Popuri for treatment planning.', icon: '📄', link: '', sort_order: 6 }
+    ];
+
+    for (const r of initialPatientResources) {
+      await runAsync(
+        'INSERT INTO patient_resources (title, category, description, icon, link, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+        [r.title, r.category, r.description, r.icon, r.link, r.sort_order]
       );
     }
 

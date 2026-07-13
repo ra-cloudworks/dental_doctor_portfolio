@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import DashboardTab from './tabs/DashboardTab';
+import ContentLibraryTab from './tabs/ContentLibraryTab';
+import SiteSettingsTab from './tabs/SiteSettingsTab';
+import AnalyticsTab from './tabs/AnalyticsTab';
 
 const C = {
   creamBg:     'var(--color-cream-bg)',
@@ -20,13 +25,14 @@ export default function Dashboard() {
   const [cases, setCases] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [stats, setStats] = useState([]);
+  const [patientResources, setPatientResources] = useState([]);
   
   // Loading & status states
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState('READY'); // READY, SAVING, SAVED, ERROR
   
   // Modal states
-  const [activeModal, setActiveModal] = useState(null); // 'hero', 'specialties', 'gallery', 'about', 'award', 'clinic', 'footer-bio'
+  const [activeModal, setActiveModal] = useState(null); // 'hero', 'specialties', 'gallery', 'about', 'award', 'clinic', 'footer-bio', 'stats', 'patient-resources'
   const [selectedItem, setSelectedItem] = useState(null); // for specialties/gallery/timeline item editing
   
   // Form states
@@ -98,17 +104,19 @@ export default function Dashboard() {
   });
   const [timelineForm, setTimelineForm] = useState({ id: null, tag: '', title: '', institution: '', details: '' });
   const [statsForm, setStatsForm] = useState([]);
+  const [patientResourceForm, setPatientResourceForm] = useState({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 });
 
   // Fetch all database content
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resContent, resSpecialties, resCases, resTimeline, resStats] = await Promise.all([
+      const [resContent, resSpecialties, resCases, resTimeline, resStats, resPatientResources] = await Promise.all([
         fetch('/api/content').then(res => res.json()),
         fetch('/api/specialties').then(res => res.json()),
         fetch('/api/cases').then(res => res.json()),
         fetch('/api/timeline').then(res => res.json()),
         fetch('/api/stats').then(res => res.json()),
+        fetch('/api/patient-resources').then(res => res.json()),
       ]);
 
       setContent(resContent);
@@ -116,6 +124,7 @@ export default function Dashboard() {
       setCases(resCases);
       setTimeline(resTimeline);
       setStats(resStats);
+      setPatientResources(resPatientResources);
       
       // Populate forms
       setHeroForm({
@@ -360,6 +369,43 @@ export default function Dashboard() {
     }
   };
 
+  // Patient Resource handlers
+  const savePatientResource = async (e) => {
+    e.preventDefault();
+    try {
+      setSaveStatus('SAVING');
+      const res = await fetch('/api/patient-resources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientResourceForm),
+      });
+      if (!res.ok) throw new Error('Save patient resource failed');
+      await fetchData();
+      setSaveStatus('SAVED');
+      setTimeout(() => setSaveStatus('READY'), 2000);
+      setSelectedItem(null);
+      setPatientResourceForm({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 });
+    } catch (err) {
+      console.error(err);
+      setSaveStatus('ERROR');
+    }
+  };
+
+  const deletePatientResource = async (id) => {
+    if (!confirm('Are you sure you want to delete this patient resource?')) return;
+    try {
+      setSaveStatus('SAVING');
+      const res = await fetch(`/api/patient-resources/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete patient resource failed');
+      await fetchData();
+      setSaveStatus('SAVED');
+      setTimeout(() => setSaveStatus('READY'), 2000);
+    } catch (err) {
+      console.error(err);
+      setSaveStatus('ERROR');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAF6F0]" style={{ fontFamily: C.sans }}>
@@ -382,7 +428,7 @@ export default function Dashboard() {
         <div className="max-w-8xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-8">
             <Link to="/" className="text-xl font-normal tracking-wide transition-opacity hover:opacity-80" style={{ fontFamily: C.serif, color: C.forestGreen }}>
-              Prosthodontic <span style={{ color: C.gold, fontStyle: 'italic' }}>CMS</span>
+               <span style={{ color: C.gold, fontStyle: 'italic' }}>Dr.</span> Chandrika Lakshmi Popuri
             </Link>
             <nav className="hidden md:flex gap-6 text-xs font-semibold uppercase tracking-wider">
               {['Dashboard', 'Content Library', 'Site Settings', 'Analytics'].map(tab => (
@@ -437,403 +483,44 @@ export default function Dashboard() {
       </header>
 
       {/* ── MAIN CONTENT GRID ── */}
-      <main className="max-w-8xl mx-auto w-full px-6 py-10 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT SIDEBAR (Col span 3) */}
-        <aside className="lg:col-span-3 space-y-6">
-          
-          {/* Elite Clinic Widget Card */}
-          <div className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-sm flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl flex items-center justify-center bg-[#04231E]/5 text-[#04231E] border border-black/5 flex-shrink-0">
-              {/* Dental CMS Logo Icon */}
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: C.gold }}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-bold text-sm tracking-wide">Elite Clinic</h3>
-              <p className="text-gray-400 text-xs mt-0.5">Clinical CMS v1.0</p>
-            </div>
-          </div>
-
-          {/* Navigation Menu */}
-          <div className="bg-white rounded-3xl p-4 border border-black/[0.04] shadow-sm space-y-1">
-            {[
-              { id: 'Home Page', label: 'Home Page' },
-              { id: 'Clinical Cases', label: 'Clinical Cases' },
-              { id: 'Services', label: 'Services' },
-              { id: 'Patient Resources', label: 'Patient Resources' },
-              { id: 'About Me', label: 'About Me' }
-            ].map(item => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveSidebarTab(item.id);
-                  // Open corresponding modal for shortcut editing
-                  if (item.id === 'Home Page') setActiveModal('hero');
-                  if (item.id === 'Clinical Cases') { setSelectedItem(null); setActiveModal('gallery'); }
-                  if (item.id === 'Services') { setSelectedItem(null); setActiveModal('specialties'); }
-                  if (item.id === 'About Me') setActiveModal('about');
-                }}
-                className="w-full text-left px-5 py-3.5 rounded-2xl text-xs font-semibold uppercase tracking-widest transition-all duration-200 flex items-center justify-between"
-                style={{
-                  backgroundColor: activeSidebarTab === item.id ? 'var(--color-cream-card)' : 'transparent',
-                  color: activeSidebarTab === item.id ? C.forestGreen : 'rgba(4,35,30,0.6)'
-                }}
-              >
-                <span>{item.label}</span>
-                {activeSidebarTab === item.id && (
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: C.gold }} />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Action button */}
-          <button
-            onClick={() => alert('All changes have been compiled and published dynamically in real-time!')}
-            className="w-full text-white font-bold py-4 rounded-full text-[11px] tracking-widest uppercase text-center shadow-md transition-all hover:opacity-90 active:scale-95 cursor-pointer"
-            style={{ backgroundColor: C.forestGreen }}
-          >
-            PUBLISH CHANGES
-          </button>
-
-          {/* Secondary links */}
-          <div className="flex justify-around text-xs font-semibold uppercase tracking-wider text-gray-400 pt-2 px-2">
-            <button onClick={() => alert('Support portal loading...')} className="hover:text-black flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              Support
-            </button>
-            <button onClick={() => alert('Settings menu...')} className="hover:text-black flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              Settings
-            </button>
-          </div>
-        </aside>
-
-        {/* MAIN PANEL - PORTFOLIO OVERVIEW (Col span 6) */}
-        <section className="lg:col-span-6 space-y-6">
-          <div className="space-y-2 text-left">
-            <h1 className="text-4xl font-normal leading-tight text-[#04231E]" style={{ fontFamily: C.serif }}>
-              Portfolio Overview
-            </h1>
-            <p className="text-gray-500 font-light text-sm leading-relaxed max-w-xl">
-              Manage your clinical identity and digital presence from a single, high-fidelity command center.
-            </p>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Card 1: Home Page */}
-            <div className="bg-white rounded-[2rem] p-6 border border-black/[0.04] shadow-sm flex flex-col justify-between text-left space-y-6 relative overflow-hidden group">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="flex items-center gap-1.5 text-[9px] font-bold px-3 py-1 rounded-full uppercase border border-[#04231E]/10 bg-[#04231E]/5 text-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                  </span>
-                  <Link to="/" target="_blank" className="text-gray-400 hover:text-black transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                  </Link>
-                </div>
-                
-                {/* Mock image screen */}
-                <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-black/[0.05] relative mb-5">
-                  <img src={content.hero_profile_img || "/src/assets/profile.jpeg"} alt="Home Page Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-3">
-                    <span className="text-white text-[9px] font-semibold tracking-wider uppercase bg-white/20 backdrop-blur-md px-2 py-0.5 rounded">Hero Section</span>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-normal leading-snug mb-2" style={{ fontFamily: C.serif }}>Home Page</h3>
-                <p className="text-gray-500 text-xs font-light leading-relaxed">
-                  Primary landing page highlighting your core values, credentials, clinical stats, and patient trust.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setHeroForm({
-                      hero_badge: content.hero_badge || '',
-                      hero_title_left: content.hero_title_left || '',
-                      hero_title_gold: content.hero_title_gold || '',
-                      hero_title_right: content.hero_title_right || '',
-                      hero_desc: content.hero_desc || '',
-                      hero_profile_img: content.hero_profile_img || '',
-                      hero_badge_title: content.hero_badge_title || '',
-                      hero_badge_desc: content.hero_badge_desc || '',
-                    });
-                    setActiveModal('hero');
-                  }}
-                  className="flex-1 text-center font-bold py-3.5 rounded-2xl text-[10px] tracking-widest uppercase border transition-all duration-300 bg-[#04231E] text-white hover:opacity-95 cursor-pointer"
-                >
-                  EDIT PAGE
-                </button>
-                <button
-                  onClick={() => setActiveModal('stats')}
-                  className="p-3.5 rounded-2xl border border-black/[0.06] hover:bg-black/[0.02] transition-colors"
-                  title="Edit Stats"
-                >
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Card 2: Specialties */}
-            <div className="bg-white rounded-[2rem] p-6 border border-black/[0.04] shadow-sm flex flex-col justify-between text-left space-y-6 relative overflow-hidden">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="flex items-center gap-1.5 text-[9px] font-bold px-3 py-1 rounded-full uppercase border border-amber-500/20 bg-amber-500/10 text-amber-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" /> Drafting
-                  </span>
-                  <button className="text-gray-400 hover:text-black transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                  </button>
-                </div>
-                
-                {/* Mock image screen */}
-                <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-black/[0.05] bg-[#FAF6F0] relative mb-5 flex flex-col items-center justify-center text-center p-4">
-                  <svg className="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span className="text-[10px] text-gray-400 font-medium tracking-wide">Pending preview update</span>
-                </div>
-
-                <h3 className="text-xl font-normal leading-snug mb-2" style={{ fontFamily: C.serif }}>Specialties</h3>
-                <p className="text-gray-500 text-xs font-light leading-relaxed">
-                  Detailed clinical service catalog covering implants, full rehabilitation, and advanced technology.
-                </p>
-              </div>
-
-              <div>
-                <button
-                  onClick={() => {
-                    setSelectedItem(null);
-                    setSpecialtyForm({ id: null, title: '', desc: '', icon: '🦷', link: '' });
-                    setActiveModal('specialties');
-                  }}
-                  className="w-full text-center font-bold py-3.5 rounded-2xl text-[10px] tracking-widest uppercase border transition-all duration-300 bg-[#04231E] text-white hover:opacity-95 cursor-pointer"
-                >
-                  RESUME EDIT
-                </button>
-              </div>
-            </div>
-
-            {/* Card 3: Clinical Gallery */}
-            <div className="bg-white rounded-[2rem] p-6 border border-black/[0.04] shadow-sm flex flex-col justify-between text-left space-y-6 relative overflow-hidden">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="flex items-center gap-1.5 text-[9px] font-bold px-3 py-1 rounded-full uppercase border border-[#04231E]/10 bg-[#04231E]/5 text-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                  </span>
-                  <Link to="/gallery" className="text-gray-400 hover:text-black transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                  </Link>
-                </div>
-                
-                {/* Mock image screen */}
-                <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-black/[0.05] relative mb-5 bg-[#04231E]">
-                  <img src={featuredCase.afterImage || "/src/assets/before_after_showcase.png"} alt="Featured Case Preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-3">
-                    <span className="text-white text-[9px] font-semibold tracking-wider uppercase bg-white/20 backdrop-blur-md px-2 py-0.5 rounded">Featured Case: {featuredCase.case_id}</span>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-normal leading-snug mb-2" style={{ fontFamily: C.serif }}>Clinical Gallery</h3>
-                <p className="text-gray-500 text-xs font-light leading-relaxed">
-                  Visual case studies demonstrating surgical success, crowns, bridges, and before/after sliders.
-                </p>
-              </div>
-
-              <div>
-                <button
-                  onClick={() => {
-                    setSelectedItem(null);
-                    setCaseForm({
-                      id: null,
-                      case_id: `Case #${String(cases.length + 1).padStart(2, '0')}`,
-                      category: 'Dental Implants',
-                      title: '',
-                      desc: '',
-                      beforeImage: '',
-                      afterImage: '',
-                      prosthetics: '',
-                      duration: '',
-                      material: '',
-                      featured: 0
-                    });
-                    setActiveModal('gallery');
-                  }}
-                  className="w-full text-center font-bold py-3.5 rounded-2xl text-[10px] tracking-widest uppercase border transition-all duration-300 bg-[#04231E] text-white hover:opacity-95 cursor-pointer"
-                >
-                  MANAGE CASES
-                </button>
-              </div>
-            </div>
-
-            {/* Card 4: About Dr. Popuri */}
-            <div className="bg-white rounded-[2rem] p-6 border border-black/[0.04] shadow-sm flex flex-col justify-between text-left space-y-6 relative overflow-hidden">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="flex items-center gap-1.5 text-[9px] font-bold px-3 py-1 rounded-full uppercase border border-[#04231E]/10 bg-[#04231E]/5 text-emerald-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                  </span>
-                  <Link to="/#clinical" className="text-gray-400 hover:text-black transition-colors">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                  </Link>
-                </div>
-                
-                {/* Mock image screen */}
-                <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-black/[0.05] relative mb-5 bg-[#FAF6F0] flex flex-col items-center justify-center p-6 text-center">
-                  <svg className="w-8 h-8 text-[#B8966C] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#04231E]">Academic Credentials</p>
-                  <p className="text-[9px] text-gray-400 mt-1 max-w-[150px] truncate">{timeline[0]?.title || 'Prosthodontics'}</p>
-                </div>
-
-                <h3 className="text-xl font-normal leading-snug mb-2" style={{ fontFamily: C.serif }}>About Dr. Popuri</h3>
-                <p className="text-gray-500 text-xs font-light leading-relaxed">
-                  Academic background, degrees, certifications, timelines, and philosophy of prosthodontic care.
-                </p>
-              </div>
-
-              <div>
-                <button
-                  onClick={() => {
-                    setAboutForm({
-                      commit_title: content.commit_title || '',
-                      commit_desc: content.commit_desc || '',
-                      commit_badge1_val: content.commit_badge1_val || '',
-                      commit_badge1_lbl: content.commit_badge1_lbl || '',
-                      commit_badge2_val: content.commit_badge2_val || '',
-                      commit_badge2_lbl: content.commit_badge2_lbl || '',
-                    });
-                    setSelectedItem(null);
-                    setActiveModal('about');
-                  }}
-                  className="w-full text-center font-bold py-3.5 rounded-2xl text-[10px] tracking-widest uppercase border transition-all duration-300 bg-[#04231E] text-white hover:opacity-95 cursor-pointer"
-                >
-                  UPDATE BIO
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* RIGHT SIDEBAR PANEL - GLOBAL CONTENT (Col span 3) */}
-        <aside className="lg:col-span-3 space-y-6">
-          <div className="bg-white rounded-[2rem] p-6 border border-black/[0.04] shadow-sm text-left space-y-6">
-            <div>
-              <h2 className="text-lg font-normal mb-1 tracking-wide" style={{ fontFamily: C.serif }}>Global Content</h2>
-              <p className="text-gray-400 text-xs font-light leading-relaxed">Updates here apply site-wide immediately.</p>
-            </div>
-
-            {/* Primary Award Card */}
-            <div className="space-y-3">
-              <span className="block text-[9px] font-bold tracking-widest uppercase text-gray-400">Primary Award</span>
-              <div className="p-4 rounded-2xl border border-black/[0.05] bg-[#FAF6F0] flex gap-3.5 items-start">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-amber-500 bg-amber-500/10 border border-amber-500/10">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5a2 2 0 10-2 2h2zm0 0H4m8 0h8m-8 0v13m0 0H6m6 0h6" /></svg>
-                </div>
-                <div className="overflow-hidden">
-                  <h4 className="text-xs font-bold text-[#04231E] truncate">{content.primary_award_title}</h4>
-                  <p className="text-[10px] text-gray-400 mt-0.5 truncate">{content.primary_award_desc}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setAwardForm({
-                    primary_award_title: content.primary_award_title || '',
-                    primary_award_desc: content.primary_award_desc || '',
-                  });
-                  setActiveModal('award');
-                }}
-                className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: C.gold }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                Edit Reward
-              </button>
-            </div>
-
-            {/* Clinic Info Card */}
-            <div className="space-y-3 pt-2" style={{ borderTop: '1px solid rgba(4,35,30,0.06)' }}>
-              <span className="block text-[9px] font-bold tracking-widest uppercase text-gray-400">Clinic Information</span>
-              <div className="space-y-2.5 text-xs">
-                <div>
-                  <span className="block text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Phone Number</span>
-                  <span className="font-bold text-gray-700">{content.clinic_phone}</span>
-                </div>
-                <div>
-                  <span className="block text-[9px] font-semibold text-gray-400 uppercase tracking-widest">Location</span>
-                  <p className="text-gray-600 font-light leading-relaxed">{content.clinic_location}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setClinicForm({
-                    clinic_phone: content.clinic_phone || '',
-                    clinic_location: content.clinic_location || '',
-                    clinic_email: content.clinic_email || '',
-                  });
-                  setActiveModal('clinic');
-                }}
-                className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: C.gold }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                Update Details
-              </button>
-            </div>
-
-            {/* Footer Bio Card */}
-            <div className="space-y-3 pt-2" style={{ borderTop: '1px solid rgba(4,35,30,0.06)' }}>
-              <span className="block text-[9px] font-bold tracking-widest uppercase text-gray-400">Footer Bio Summary</span>
-              <div className="p-4 rounded-2xl border border-black/[0.05] bg-[#FAF6F0]">
-                <p className="text-xs text-gray-600 font-light leading-relaxed italic">
-                  "{content.footer_bio_summary}"
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setFooterBioForm({
-                    footer_bio_summary: content.footer_bio_summary || '',
-                  });
-                  setActiveModal('footer-bio');
-                }}
-                className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase"
-                style={{ color: C.gold }}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                Edit Text
-              </button>
-            </div>
-
-            {/* Auto Save Status */}
-            <div className="pt-4 flex justify-between items-center text-xs" style={{ borderTop: '1px solid rgba(4,35,30,0.06)' }}>
-              <span className="text-gray-400 font-medium">Auto-Save Status</span>
-              {saveStatus === 'READY' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">Ready</span>
-              )}
-              {saveStatus === 'SAVING' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 animate-pulse">Saving...</span>
-              )}
-              {saveStatus === 'SAVED' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Saved!</span>
-              )}
-              {saveStatus === 'ERROR' && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-50 text-rose-600">Error</span>
-              )}
-            </div>
-            
-            <button
-              onClick={() => alert('Review panel loaded. All changes compiled in settings db.')}
-              className="w-full text-center font-bold py-3.5 rounded-full text-[10px] tracking-widest uppercase border border-gold-accent hover:bg-gold-accent/10 transition-all duration-300 cursor-pointer"
-              style={{ borderColor: C.gold, color: C.gold }}
-            >
-              REVIEW ALL CHANGES
-            </button>
-          </div>
-        </aside>
+      <main className="max-w-8xl mx-auto w-full px-6 py-10 flex-1">
+        {activeTab === 'Dashboard' && (
+          <DashboardTab 
+            C={C}
+            content={content}
+            activeSidebarTab={activeSidebarTab}
+            setActiveSidebarTab={setActiveSidebarTab}
+            setActiveModal={setActiveModal}
+            setSelectedItem={setSelectedItem}
+            saveStatus={saveStatus}
+            setHeroForm={setHeroForm}
+            cases={cases}
+            timeline={timeline}
+            patientResources={patientResources}
+            setPatientResourceForm={setPatientResourceForm}
+            setAboutForm={setAboutForm}
+            setCaseForm={setCaseForm}
+            setSpecialtyForm={setSpecialtyForm}
+            featuredCase={featuredCase}
+          />
+        )}
+        {activeTab === 'Content Library' && (
+          <ContentLibraryTab C={C} cases={cases} content={content} />
+        )}
+        {activeTab === 'Site Settings' && (
+          <SiteSettingsTab 
+            C={C}
+            content={content}
+            setClinicForm={setClinicForm}
+            setAwardForm={setAwardForm}
+            setAboutForm={setAboutForm}
+            setFooterBioForm={setFooterBioForm}
+            setActiveModal={setActiveModal}
+          />
+        )}
+        {activeTab === 'Analytics' && (
+          <AnalyticsTab C={C} />
+        )}
       </main>
 
       {/* ── FOOTER ── */}
@@ -850,9 +537,23 @@ export default function Dashboard() {
       </footer>
 
       {/* ── MODALS (Forms Overlay) ── */}
+      <AnimatePresence>
       {activeModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-black/[0.04]">
+        <motion.div 
+          className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4"
+          initial={{ backgroundColor: 'rgba(0,0,0,0)' }}
+          animate={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          exit={{ backgroundColor: 'rgba(0,0,0,0)' }}
+          transition={{ duration: 0.25 }}
+          style={{ backdropFilter: 'blur(4px)' }}
+        >
+          <motion.div 
+            className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-black/[0.04]"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          >
             
             {/* Modal Header */}
             <div className="px-8 py-6 border-b border-black/[0.06] flex justify-between items-center bg-[#FAF6F0] rounded-t-[2rem]">
@@ -865,6 +566,7 @@ export default function Dashboard() {
                 {activeModal === 'clinic' && 'Update Clinic Information'}
                 {activeModal === 'footer-bio' && 'Edit Footer Bio Summary'}
                 {activeModal === 'stats' && 'Update Clinical Statistics'}
+                {activeModal === 'patient-resources' && 'Manage Patient Resources'}
               </h3>
               <button
                 onClick={() => { setActiveModal(null); setSelectedItem(null); }}
@@ -1514,11 +1216,148 @@ export default function Dashboard() {
                 </form>
               )}
 
-            </div>
-          </div>
-        </div>
-      )}
+              {/* PATIENT RESOURCES FORM */}
+              {activeModal === 'patient-resources' && (
+                <div className="space-y-8">
+                  {/* Current Patient Resources List */}
+                  <div className="space-y-3">
+                    <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Patient Resources</span>
+                    <div className="grid grid-cols-1 gap-3">
+                      {patientResources.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-4">No patient resources yet. Add one below.</p>
+                      )}
+                      {patientResources.map(r => (
+                        <div key={r.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex justify-between items-start gap-4">
+                          <div className="flex items-start gap-4 flex-1 min-w-0">
+                            <span className="text-2xl flex-shrink-0 mt-0.5">{r.icon}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-bold text-[#04231E] truncate">{r.title}</h4>
+                                <span className="text-[8px] font-bold px-2 py-0.5 rounded-full uppercase bg-[#04231E]/5 text-[#04231E]/60 flex-shrink-0">{r.category}</span>
+                              </div>
+                              <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{r.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              onClick={() => { setSelectedItem(r.id); setPatientResourceForm(r); }}
+                              className="px-3.5 py-1.5 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deletePatientResource(r.id)}
+                              className="px-3.5 py-1.5 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
+                  {/* Add / Edit Form */}
+                  <form onSubmit={savePatientResource} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
+                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
+                      {selectedItem ? 'Edit Patient Resource' : 'Add New Patient Resource'}
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Resource Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={patientResourceForm.title}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, title: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          placeholder="e.g. Pre-Operative Instructions"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
+                        <select
+                          value={patientResourceForm.category}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, category: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                        >
+                          <option value="Pre-Op Instructions">Pre-Op Instructions</option>
+                          <option value="Post-Op Care">Post-Op Care</option>
+                          <option value="General Info">General Info</option>
+                          <option value="FAQ">FAQ</option>
+                          <option value="Payment & Insurance">Payment & Insurance</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Icon Emoji</label>
+                        <input
+                          type="text"
+                          required
+                          value={patientResourceForm.icon}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, icon: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-center text-xs"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Description</label>
+                        <textarea
+                          rows="3"
+                          required
+                          value={patientResourceForm.description}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, description: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">External Link (optional)</label>
+                        <input
+                          type="text"
+                          value={patientResourceForm.link}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, link: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          placeholder="https://..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Sort Order</label>
+                        <input
+                          type="number"
+                          value={patientResourceForm.sort_order}
+                          onChange={e => setPatientResourceForm({ ...patientResourceForm, sort_order: parseInt(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 justify-end pt-2">
+                      {selectedItem && (
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedItem(null); setPatientResourceForm({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 }); }}
+                          className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider"
+                        >
+                          Cancel Edit
+                        </button>
+                      )}
+                      <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
+                        {selectedItem ? 'Update Resource' : 'Add Resource'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }

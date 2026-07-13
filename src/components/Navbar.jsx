@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const C = {
   creamBg:     'var(--color-cream-bg)',
@@ -11,6 +12,13 @@ const C = {
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const menuItems = [
     { label: 'CLINICAL PROFILE', href: '/' },
@@ -21,112 +29,75 @@ export default function Navbar() {
   ];
 
   return (
-    <nav
-      className="sticky top-0 z-50 shadow-sm"
+    <motion.nav
+      className="sticky top-0 z-50"
       style={{
-        backgroundColor: 'rgba(250,246,240,0.92)',
-        backdropFilter: 'blur(12px)',
+        backgroundColor: scrolled ? 'rgba(250,246,240,0.97)' : 'rgba(250,246,240,0.92)',
+        backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(4,35,30,0.06)',
         fontFamily: C.sans,
+        boxShadow: scrolled ? '0 4px 20px -4px rgba(4,35,30,0.08)' : 'none',
       }}
+      initial={false}
+      animate={{ paddingTop: scrolled ? 12 : 16, paddingBottom: scrolled ? 12 : 16 }}
+      transition={{ duration: 0.3 }}
     >
-      <div className="max-w-8xl mx-auto px-6 sm:px-8 lg:px-16 py-4 flex justify-between items-center gap-6">
-
-        {/* Brand */}
-        <div className="flex-shrink-0">
-          <Link
-            to="/"
-            className="text-xs sm:text-sm font-bold tracking-widest uppercase transition-opacity duration-200 hover:opacity-70"
-            style={{ color: C.forestGreen }}
-          >
+      <div className="max-w-8xl mx-auto px-6 sm:px-8 lg:px-16 flex justify-between items-center gap-6">
+        <motion.div className="flex-shrink-0" animate={{ scale: scrolled ? 0.95 : 1 }} transition={{ duration: 0.3 }}>
+          <Link to="/" className="text-xs sm:text-sm font-bold tracking-widest uppercase transition-opacity duration-200 hover:opacity-70" style={{ color: C.forestGreen }}>
             Dr. Chandrika Lakshmi Popuri
           </Link>
-        </div>
+        </motion.div>
 
-        {/* Hamburger */}
-        <button
-          className="md:hidden flex flex-col gap-1.5 cursor-pointer p-2 z-50"
-          onClick={() => setIsOpen(o => !o)}
-          aria-label="Toggle menu"
-        >
+        <button className="md:hidden flex flex-col gap-1.5 cursor-pointer p-2 z-50" onClick={() => setIsOpen(o => !o)} aria-label="Toggle menu">
           {[0, 1, 2].map(i => (
-            <span
-              key={i}
-              className="w-6 h-0.5 rounded transition-all duration-300"
-              style={{
-                backgroundColor: C.forestGreen,
-                ...(i === 0 && isOpen ? { transform: 'rotate(45deg) translateY(8px)' } : {}),
-                ...(i === 1 && isOpen ? { opacity: 0 } : {}),
-                ...(i === 2 && isOpen ? { transform: 'rotate(-45deg) translateY(-8px)' } : {}),
-              }}
-            />
+            <span key={i} className="w-6 h-0.5 rounded transition-all duration-300" style={{ backgroundColor: C.forestGreen, ...(i === 0 && isOpen ? { transform: 'rotate(45deg) translateY(8px)' } : {}), ...(i === 1 && isOpen ? { opacity: 0 } : {}), ...(i === 2 && isOpen ? { transform: 'rotate(-45deg) translateY(-8px)' } : {}) }} />
           ))}
         </button>
 
-        {/* Desktop nav links */}
         <ul className="hidden md:flex gap-8 lg:gap-10 flex-1 justify-center">
           {menuItems.map((item, i) => (
             <li key={i}>
-              <Link
-                to={item.href}
-                className="block py-1 font-bold text-[11px] tracking-widest uppercase transition-colors duration-300"
-                style={{ color: 'rgba(4,35,30,0.80)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(4,35,30,0.80)')}
-              >
+              <Link to={item.href} className="block py-1 font-bold text-[11px] tracking-widest uppercase transition-colors duration-300 hover:text-[var(--color-gold-accent)]" style={{ color: 'rgba(4,35,30,0.80)' }}>
                 {item.label}
               </Link>
             </li>
           ))}
         </ul>
 
-        {/* Book button */}
         <div className="hidden md:block flex-shrink-0">
-          <Link
-            to="/book"
-            className="inline-block font-bold py-2.5 px-6 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
-            style={{ backgroundColor: C.forestGreen }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
+          <Link to="/book" className="inline-block font-bold py-2.5 px-6 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer" style={{ backgroundColor: C.forestGreen }}>
             BOOK CONSULTATION
           </Link>
         </div>
       </div>
 
-      {/* Mobile dropdown */}
-      <div
-        className="md:hidden overflow-hidden transition-all duration-300"
-        style={{ maxHeight: isOpen ? '24rem' : 0 }}
-      >
-        <ul
-          className="px-6 py-4 space-y-1"
-          style={{ borderBottom: '1px solid rgba(4,35,30,0.08)', backgroundColor: 'rgba(250,246,240,0.97)' }}
-        >
-          {menuItems.map((item, i) => (
-            <li key={i}>
-              <Link
-                to={item.href}
-                className="block px-2 py-3 font-bold text-[11px] tracking-widest uppercase"
-                style={{ color: 'rgba(4,35,30,0.80)', borderBottom: '1px solid rgba(4,35,30,0.06)' }}
-                onClick={() => setIsOpen(false)}
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-          <li className="pt-2 pb-1">
-            <Link
-              to="/book"
-              className="block w-full font-bold py-3 px-6 rounded-full text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
-              style={{ backgroundColor: C.forestGreen }}
-              onClick={() => setIsOpen(false)}
-            >
-              BOOK CONSULTATION
-            </Link>
-          </li>
-        </ul>
-      </div>
-    </nav>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="md:hidden overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            <ul className="px-6 py-4 space-y-1" style={{ borderBottom: '1px solid rgba(4,35,30,0.08)', backgroundColor: 'rgba(250,246,240,0.97)' }}>
+              {menuItems.map((item, i) => (
+                <motion.li key={i} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Link to={item.href} className="block px-2 py-3 font-bold text-[11px] tracking-widest uppercase" style={{ color: 'rgba(4,35,30,0.80)', borderBottom: '1px solid rgba(4,35,30,0.06)' }} onClick={() => setIsOpen(false)}>
+                    {item.label}
+                  </Link>
+                </motion.li>
+              ))}
+              <li className="pt-2 pb-1">
+                <Link to="/book" className="block w-full font-bold py-3 px-6 rounded-full text-[11px] tracking-widest uppercase text-white text-center cursor-pointer" style={{ backgroundColor: C.forestGreen }} onClick={() => setIsOpen(false)}>
+                  BOOK CONSULTATION
+                </Link>
+              </li>
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }

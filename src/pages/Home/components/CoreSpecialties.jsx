@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import ScrollReveal from '../../../components/ScrollReveal';
 import implantImgFallback from '../../../assets/implant_showcase.png';
 
 const C = {
@@ -13,7 +15,6 @@ const C = {
 };
 
 export default function CoreSpecialties() {
-  const [vis, setVis] = useState(false);
   const [specialties, setSpecialties] = useState([]);
   const [content, setContent] = useState({
     implant_title: 'Advanced Dental Implantology',
@@ -21,8 +22,6 @@ export default function CoreSpecialties() {
   });
 
   useEffect(() => {
-    setVis(true);
-    // Fetch specialties
     fetch('/api/specialties')
       .then(res => res.json())
       .then(data => {
@@ -30,7 +29,6 @@ export default function CoreSpecialties() {
       })
       .catch(err => console.error('Error fetching specialties:', err));
 
-    // Fetch dynamic content
     fetch('/api/content')
       .then(res => res.json())
       .then(data => {
@@ -39,10 +37,6 @@ export default function CoreSpecialties() {
       .catch(err => console.error('Error fetching settings content:', err));
   }, []);
 
-  const fade = (delay = 0) =>
-    `transition-all duration-700 transform ${vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`;
-
-  // Find corresponding items from database or fall back
   const implantSpecialty = specialties.find(s => s.title.toLowerCase().includes('implant')) || {
     title: 'Advanced Dental Implants',
     desc: 'Restoration of single or multiple missing teeth with elite osseointegrated titanium implants. Focus on long-term stability and bone preservation.'
@@ -70,149 +64,109 @@ export default function CoreSpecialties() {
     >
       <div className="max-w-7xl mx-auto">
 
-        {/* ── Section Header ── */}
-        <div className="text-center mb-16 space-y-3">
-          <h2
-            className="text-3xl sm:text-4xl font-normal tracking-wide"
-            style={{ fontFamily: C.serif, color: C.forestGreen }}
-          >
-            Core Specialties
-          </h2>
-          <p className="text-gray-500 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed font-light">
-            Delivering high-fidelity prosthetic restorations through state-of-the-art geometry, materials, and implant surgical protocols.
-          </p>
-        </div>
+        <ScrollReveal>
+          <div className="text-center mb-16 space-y-3">
+            <h2 className="text-3xl sm:text-4xl font-normal tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>
+              Core Specialties
+            </h2>
+            <p className="text-gray-500 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed font-light">
+              Delivering high-fidelity prosthetic restorations through state-of-the-art geometry, materials, and implant surgical protocols.
+            </p>
+          </div>
+        </ScrollReveal>
 
-        {/* ── Grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Card 1 — Advanced Dental Implants  (double-wide) */}
-          <Link
-            to="/specialties#implantology"
-            className={`lg:col-span-2 rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col md:flex-row justify-between items-center gap-8 overflow-hidden group text-left ${fade()}`}
-            style={{ background: '#fff', border: '1px solid rgba(4,35,30,0.06)' }}
-          >
-            <div className="flex-1 space-y-5">
-              <h3
-                className="text-2xl font-normal tracking-wide"
-                style={{ fontFamily: C.serif, color: C.forestGreen }}
-              >
-                {implantSpecialty.title}
-              </h3>
-              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light max-w-md">
-                {implantSpecialty.desc}
-              </p>
-              <div
-                className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 transition-colors duration-300"
-                style={{ color: C.gold }}
-              >
-                IMPLANTATION PROSTHODONTICS
-                <span className="transform group-hover:translate-x-1.5 transition-transform duration-300">→</span>
+          <ScrollReveal delay={0}>
+            <Link
+              to="/specialties#implantology"
+              className="lg:col-span-2 rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col md:flex-row justify-between items-center gap-8 overflow-hidden group text-left block h-full"
+              style={{ background: '#fff', border: '1px solid rgba(4,35,30,0.06)' }}
+            >
+              <div className="flex-1 space-y-5">
+                <h3 className="text-2xl font-normal tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>
+                  {implantSpecialty.title}
+                </h3>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light max-w-md">{implantSpecialty.desc}</p>
+                <div className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 transition-colors duration-300" style={{ color: C.gold }}>
+                  IMPLANTATION PROSTHODONTICS
+                  <span className="transform group-hover:translate-x-1.5 transition-transform duration-300">→</span>
+                </div>
               </div>
-            </div>
-            {/* Implant image */}
-            <div
-              className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden flex-shrink-0 shadow-inner"
+              <div className="w-48 h-48 md:w-56 md:h-56 rounded-2xl overflow-hidden flex-shrink-0 shadow-inner" style={{ backgroundColor: C.forestGreen }}>
+                <img src={implantImgFallback} alt="Dental Implant" className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+              </div>
+            </Link>
+          </ScrollReveal>
+
+          <ScrollReveal delay={0.1}>
+            <motion.div
+              whileHover={{ y: -6, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.15)' }}
+              transition={{ duration: 0.3 }}
+              className="rounded-3xl p-10 flex flex-col justify-between min-h-[300px] h-full"
               style={{ backgroundColor: C.forestGreen }}
             >
-              <img
-                src={implantImgFallback}
-                alt="Dental Implant"
-                className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-              />
-            </div>
-          </Link>
-
-          {/* Card 2 — Cosmetic Dentistry  (dark green) */}
-          <div
-            className={`rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[300px] ${fade()}`}
-            style={{ backgroundColor: C.forestGreen, transitionDelay: '100ms' }}
-          >
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(184,150,108,0.15)', border: '1px solid rgba(184,150,108,0.4)', color: C.gold }}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                  d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <h3
-                className="text-xl font-normal mb-3 tracking-wide text-white"
-                style={{ fontFamily: C.serif }}
-              >
-                {cosmeticSpecialty.title}
-              </h3>
-              <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-light">
-                {cosmeticSpecialty.desc}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3 — Full-Mouth Rehabilitation  (beige) */}
-          <div
-            className={`rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col justify-between min-h-[300px] ${fade()}`}
-            style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)', transitionDelay: '200ms' }}
-          >
-            <div
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ background: 'rgba(4,35,30,0.05)', border: '1px solid rgba(4,35,30,0.14)', color: C.forestGreen }}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <h3
-                className="text-xl font-normal mb-3 tracking-wide"
-                style={{ fontFamily: C.serif, color: C.forestGreen }}
-              >
-                {fullMouthSpecialty.title}
-              </h3>
-              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">
-                {fullMouthSpecialty.desc}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 4 — Clinical Excellence  (beige, double-wide) */}
-          <div
-            className={`lg:col-span-2 rounded-3xl p-10 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 flex flex-col md:flex-row justify-between items-center gap-8 overflow-hidden ${fade()}`}
-            style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)', transitionDelay: '300ms' }}
-          >
-            <div className="flex-1 space-y-4 text-left">
-              <h3
-                className="text-2xl font-normal tracking-wide"
-                style={{ fontFamily: C.serif, color: C.forestGreen }}
-              >
-                {generalSpecialty.title}
-              </h3>
-              <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">
-                {generalSpecialty.desc}
-              </p>
-            </div>
-            {/* Decorative overlapping circles */}
-            <div className="flex items-center flex-shrink-0">
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-2xl"
-                style={{ background: 'rgba(4,35,30,0.08)', border: '1px solid rgba(4,35,30,0.18)' }}
-              >
-                🔬
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(184,150,108,0.15)', border: '1px solid rgba(184,150,108,0.4)', color: C.gold }}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
               </div>
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-2xl -ml-4 shadow-md"
-                style={{ background: 'rgba(184,150,108,0.1)', border: '1px solid rgba(184,150,108,0.2)' }}
-              >
-                📐
+              <div className="text-left">
+                <h3 className="text-xl font-normal mb-3 tracking-wide text-white" style={{ fontFamily: C.serif }}>{cosmeticSpecialty.title}</h3>
+                <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-light">{cosmeticSpecialty.desc}</p>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </ScrollReveal>
 
+          <ScrollReveal delay={0.2}>
+            <motion.div
+              whileHover={{ y: -6, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.12)' }}
+              transition={{ duration: 0.3 }}
+              className="rounded-3xl p-10 flex flex-col justify-between min-h-[300px] h-full"
+              style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)' }}
+            >
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(4,35,30,0.05)', border: '1px solid rgba(4,35,30,0.14)', color: C.forestGreen }}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <h3 className="text-xl font-normal mb-3 tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>{fullMouthSpecialty.title}</h3>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">{fullMouthSpecialty.desc}</p>
+              </div>
+            </motion.div>
+          </ScrollReveal>
+
+          <ScrollReveal delay={0.3}>
+            <motion.div
+              whileHover={{ y: -6, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.12)' }}
+              transition={{ duration: 0.3 }}
+              className="lg:col-span-2 rounded-3xl p-10 flex flex-col md:flex-row justify-between items-center gap-8 overflow-hidden h-full"
+              style={{ backgroundColor: C.creamCard, border: '1px solid rgba(4,35,30,0.06)' }}
+            >
+              <div className="flex-1 space-y-4 text-left">
+                <h3 className="text-2xl font-normal tracking-wide" style={{ fontFamily: C.serif, color: C.forestGreen }}>{generalSpecialty.title}</h3>
+                <p className="text-gray-600 text-xs sm:text-sm leading-relaxed font-light">{generalSpecialty.desc}</p>
+              </div>
+              <div className="flex items-center flex-shrink-0">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl" style={{ background: 'rgba(4,35,30,0.08)', border: '1px solid rgba(4,35,30,0.18)' }}>🔬</div>
+                <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl -ml-4 shadow-md" style={{ background: 'rgba(184,150,108,0.1)', border: '1px solid rgba(184,150,108,0.2)' }}>📐</div>
+              </div>
+            </motion.div>
+          </ScrollReveal>
         </div>
+
+        <ScrollReveal delay={0.35}>
+          <div className="text-center mt-12">
+            <Link
+              to="/specialties"
+              className="inline-block font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase cursor-pointer group"
+              style={{ border: '1px solid var(--color-gold-accent)', color: C.gold, backgroundColor: 'transparent' }}
+            >
+              <span className="group-hover:text-white transition-colors duration-300">VIEW ALL SPECIALTIES →</span>
+            </Link>
+          </div>
+        </ScrollReveal>
       </div>
     </section>
   );
 }
-
