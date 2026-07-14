@@ -15,6 +15,34 @@ const C = {
   sans:        'var(--font-sans-premium)',
 };
 
+const MODAL_SECTIONS = [
+  { key: 'hero', label: 'Hero', icon: '🏠' },
+  { key: 'stats', label: 'Stats', icon: '📊' },
+  { key: 'specialties', label: 'Specialties', icon: '🦷' },
+  { key: 'gallery', label: 'Gallery', icon: '🖼' },
+  { key: 'about', label: 'About', icon: '👨‍⚕️' },
+  { key: 'credentials', label: 'Credentials', icon: '🎓' },
+  { key: 'patient-resources', label: 'Patient Resources', icon: '📋' },
+  { key: 'award', label: 'Awards', icon: '🏆' },
+  { key: 'clinic', label: 'Clinic Info', icon: '🏥' },
+  { key: 'footer-bio', label: 'Footer Bio', icon: '📝' },
+  { key: 'success-stories', label: 'Success Stories', icon: '⭐' },
+];
+
+const SECTION_TITLES = {
+  'hero': 'Edit Home Page Content',
+  'stats': 'Update Clinical Statistics',
+  'specialties': 'Edit Service Specialties',
+  'gallery': 'Manage Clinical Gallery',
+  'about': 'Edit About Dr. Popuri & Bio',
+  'credentials': 'Manage Timeline Credentials',
+  'patient-resources': 'Manage Patient Resources',
+  'award': 'Edit Primary Award',
+  'clinic': 'Update Clinic Information',
+  'footer-bio': 'Edit Footer Bio Summary',
+  'success-stories': 'Edit Success Stories',
+};
+
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [activeSidebarTab, setActiveSidebarTab] = useState('Home Page');
@@ -29,11 +57,12 @@ export default function Dashboard() {
   
   // Loading & status states
   const [loading, setLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState('READY'); // READY, SAVING, SAVED, ERROR
+  const [saveStatus, setSaveStatus] = useState('READY');
   
   // Modal states
-  const [activeModal, setActiveModal] = useState(null); // 'hero', 'specialties', 'gallery', 'about', 'award', 'clinic', 'footer-bio', 'stats', 'patient-resources'
-  const [selectedItem, setSelectedItem] = useState(null); // for specialties/gallery/timeline item editing
+  const [activeModal, setActiveModal] = useState(null);
+  const [modalSection, setModalSection] = useState('hero');
+  const [selectedItem, setSelectedItem] = useState(null);
   
   // Form states
   const [heroForm, setHeroForm] = useState({
@@ -87,6 +116,12 @@ export default function Dashboard() {
     footer_bio_summary: '',
   });
 
+  const [storyForm, setStoryForm] = useState({
+    story_quote: '',
+    story_patient_name: '',
+    story_patient_role: '',
+  });
+
   // Modal item editors
   const [specialtyForm, setSpecialtyForm] = useState({ id: null, title: '', desc: '', icon: '', link: '' });
   const [caseForm, setCaseForm] = useState({
@@ -105,6 +140,13 @@ export default function Dashboard() {
   const [timelineForm, setTimelineForm] = useState({ id: null, tag: '', title: '', institution: '', details: '' });
   const [statsForm, setStatsForm] = useState([]);
   const [patientResourceForm, setPatientResourceForm] = useState({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 });
+
+  // Sync modalSection when activeModal changes
+  useEffect(() => {
+    if (activeModal) {
+      setModalSection(activeModal);
+    }
+  }, [activeModal]);
 
   // Fetch all database content
   const fetchData = async () => {
@@ -176,6 +218,12 @@ export default function Dashboard() {
 
       setFooterBioForm({
         footer_bio_summary: resContent.footer_bio_summary || '',
+      });
+
+      setStoryForm({
+        story_quote: resContent.story_quote || '',
+        story_patient_name: resContent.story_patient_name || '',
+        story_patient_role: resContent.story_patient_role || '',
       });
 
       setStatsForm(resStats);
@@ -505,17 +553,15 @@ export default function Dashboard() {
           />
         )}
         {activeTab === 'Content Library' && (
-          <ContentLibraryTab C={C} cases={cases} content={content} />
+          <ContentLibraryTab C={C} cases={cases} content={content} handleImageUpload={handleImageUpload} />
         )}
         {activeTab === 'Site Settings' && (
           <SiteSettingsTab 
             C={C}
             content={content}
-            setClinicForm={setClinicForm}
-            setAwardForm={setAwardForm}
-            setAboutForm={setAboutForm}
-            setFooterBioForm={setFooterBioForm}
-            setActiveModal={setActiveModal}
+            setContent={setContent}
+            saveSettings={saveSettings}
+            setSaveStatus={setSaveStatus}
           />
         )}
         {activeTab === 'Analytics' && (
@@ -536,7 +582,7 @@ export default function Dashboard() {
         </div>
       </footer>
 
-      {/* ── MODALS (Forms Overlay) ── */}
+      {/* ── MODAL (Sidebar-Tabbed Editor) ── */}
       <AnimatePresence>
       {activeModal && (
         <motion.div 
@@ -548,7 +594,7 @@ export default function Dashboard() {
           style={{ backdropFilter: 'blur(4px)' }}
         >
           <motion.div 
-            className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto border border-black/[0.04]"
+            className="bg-white rounded-[2rem] shadow-2xl max-w-5xl w-full max-h-[85vh] overflow-hidden border border-black/[0.04] flex flex-col"
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -556,17 +602,9 @@ export default function Dashboard() {
           >
             
             {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-black/[0.06] flex justify-between items-center bg-[#FAF6F0] rounded-t-[2rem]">
+            <div className="px-8 py-6 border-b border-black/[0.06] flex justify-between items-center bg-[#FAF6F0] rounded-t-[2rem] flex-shrink-0">
               <h3 className="text-2xl font-normal" style={{ fontFamily: C.serif, color: C.forestGreen }}>
-                {activeModal === 'hero' && 'Edit Home Page Content'}
-                {activeModal === 'specialties' && 'Edit Service Specialties'}
-                {activeModal === 'gallery' && 'Manage Clinical Gallery'}
-                {activeModal === 'about' && 'Edit About Dr. Popuri & Bio'}
-                {activeModal === 'award' && 'Edit Primary Award'}
-                {activeModal === 'clinic' && 'Update Clinic Information'}
-                {activeModal === 'footer-bio' && 'Edit Footer Bio Summary'}
-                {activeModal === 'stats' && 'Update Clinical Statistics'}
-                {activeModal === 'patient-resources' && 'Manage Patient Resources'}
+                {SECTION_TITLES[modalSection] || 'Edit Content'}
               </h3>
               <button
                 onClick={() => { setActiveModal(null); setSelectedItem(null); }}
@@ -576,492 +614,517 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-8 text-left">
+            {/* Modal Body: Sidebar + Content */}
+            <div className="flex flex-1 min-h-0">
               
-              {/* HERO FORM */}
-              {activeModal === 'hero' && (
-                <form onSubmit={(e) => { e.preventDefault(); saveSettings(heroForm); }} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Certification Badge</label>
-                      <input
-                        type="text"
-                        value={heroForm.hero_badge}
-                        onChange={e => setHeroForm({ ...heroForm, hero_badge: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                    
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Main Heading (split into three segments)</label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-400 mb-1">Prefix Text</label>
-                          <input
-                            type="text"
-                            value={heroForm.hero_title_left}
-                            onChange={e => setHeroForm({ ...heroForm, hero_title_left: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-400 mb-1">Gold Highlight (Italic)</label>
-                          <input
-                            type="text"
-                            value={heroForm.hero_title_gold}
-                            onChange={e => setHeroForm({ ...heroForm, hero_title_gold: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[9px] font-bold text-gray-400 mb-1">Suffix Text</label>
-                          <input
-                            type="text"
-                            value={heroForm.hero_title_right}
-                            onChange={e => setHeroForm({ ...heroForm, hero_title_right: e.target.value })}
-                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Description Paragraph</label>
-                      <textarea
-                        rows="3"
-                        value={heroForm.hero_desc}
-                        onChange={e => setHeroForm({ ...heroForm, hero_desc: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Profile Picture (Upload)</label>
-                      <div className="flex items-center gap-3">
-                        {heroForm.hero_profile_img && (
-                          <img src={heroForm.hero_profile_img} className="w-10 h-10 object-cover rounded-lg border border-black/[0.08]" alt="Profile thumbnail" />
-                        )}
-                        <input
-                          type="file"
-                          onChange={e => handleImageUpload(e, (path) => setHeroForm({ ...heroForm, hero_profile_img: path }))}
-                          className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-gray-100 file:text-[#04231E] hover:file:bg-gray-200 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Or Direct Image URL Path</label>
-                      <input
-                        type="text"
-                        value={heroForm.hero_profile_img}
-                        onChange={e => setHeroForm({ ...heroForm, hero_profile_img: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Floating Badge Specialty</label>
-                      <input
-                        type="text"
-                        value={heroForm.hero_badge_title}
-                        onChange={e => setHeroForm({ ...heroForm, hero_badge_title: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Floating Badge Subtitle</label>
-                      <input
-                        type="text"
-                        value={heroForm.hero_badge_desc}
-                        onChange={e => setHeroForm({ ...heroForm, hero_badge_desc: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
-                    <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08] hover:bg-black/[0.01]">Cancel</button>
-                    <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Homepage Settings</button>
-                  </div>
-                </form>
-              )}
-
-              {/* STATS FORM */}
-              {activeModal === 'stats' && (
-                <form onSubmit={saveStats} className="space-y-6">
-                  <div className="space-y-4">
-                    {statsForm.map((stat, i) => (
-                      <div key={stat.id || i} className="grid grid-cols-2 gap-4 items-center p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl">
-                        <div>
-                          <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Stat Value</label>
-                          <input
-                            type="text"
-                            value={stat.value}
-                            onChange={(e) => {
-                              const newStats = [...statsForm];
-                              newStats[i].value = e.target.value;
-                              setStatsForm(newStats);
-                            }}
-                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Stat Label</label>
-                          <input
-                            type="text"
-                            value={stat.label}
-                            onChange={(e) => {
-                              const newStats = [...statsForm];
-                              newStats[i].label = e.target.value;
-                              setStatsForm(newStats);
-                            }}
-                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-sm"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
-                    <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
-                    <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Update Statistics</button>
-                  </div>
-                </form>
-              )}
-
-              {/* SPECIALTIES FORM */}
-              {activeModal === 'specialties' && (
-                <div className="space-y-8">
-                  {/* Current Specialties List */}
-                  <div className="space-y-3">
-                    <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Specialized Services</span>
-                    <div className="grid grid-cols-1 gap-3">
-                      {specialties.map(s => (
-                        <div key={s.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex justify-between items-center gap-4">
-                          <div className="flex items-center gap-4">
-                            <span className="text-3xl">{s.icon}</span>
-                            <div>
-                              <h4 className="text-xs font-bold text-[#04231E]">{s.title}</h4>
-                              <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{s.desc}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => { setSelectedItem(s.id); setSpecialtyForm(s); }}
-                              className="px-3.5 py-1.5 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => deleteSpecialty(s.id)}
-                              className="px-3.5 py-1.5 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Add / Edit Form */}
-                  <form onSubmit={saveSpecialty} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-                      {selectedItem ? 'Edit Specialty Details' : 'Add New Service Specialty'}
-                    </h4>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Service Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={specialtyForm.title}
-                          onChange={e => setSpecialtyForm({ ...specialtyForm, title: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Icon Emoji (e.g. 🦷)</label>
-                        <input
-                          type="text"
-                          required
-                          value={specialtyForm.icon}
-                          onChange={e => setSpecialtyForm({ ...specialtyForm, icon: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-center text-xs"
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Service Description</label>
-                        <input
-                          type="text"
-                          required
-                          value={specialtyForm.desc}
-                          onChange={e => setSpecialtyForm({ ...specialtyForm, desc: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-                      <div className="sm:col-span-3">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Internal Target Link (optional, e.g. #implantology)</label>
-                        <input
-                          type="text"
-                          value={specialtyForm.link}
-                          onChange={e => setSpecialtyForm({ ...specialtyForm, link: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      {selectedItem && (
-                        <button type="button" onClick={() => { setSelectedItem(null); setSpecialtyForm({ id: null, title: '', desc: '', icon: '🦷', link: '' }); }} className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider">Cancel Edit</button>
-                      )}
-                      <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
-                        {selectedItem ? 'Update Specialty' : 'Add Specialty'}
-                      </button>
-                    </div>
-                  </form>
+              {/* Sidebar Navigation */}
+              <div className="w-[220px] flex-shrink-0 border-r border-black/[0.06] bg-[#FAF6F0]/60 overflow-y-auto py-4">
+                <div className="space-y-1 px-3">
+                  {MODAL_SECTIONS.map(section => (
+                    <button
+                      key={section.key}
+                      onClick={() => setModalSection(section.key)}
+                      className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center gap-3"
+                      style={{
+                        backgroundColor: modalSection === section.key ? C.forestGreen : 'transparent',
+                        color: modalSection === section.key ? 'white' : 'rgba(4,35,30,0.5)',
+                      }}
+                    >
+                      <span className="text-sm">{section.icon}</span>
+                      <span className="tracking-wide">{section.label}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* GALLERY FORM */}
-              {activeModal === 'gallery' && (
-                <div className="space-y-8">
-                  {/* Current Cases Grid */}
-                  <div className="space-y-3">
-                    <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Clinical Cases</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {cases.map(c => (
-                        <div key={c.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex flex-col justify-between space-y-4">
-                          <div>
-                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] font-bold text-gray-400">{c.case_id}</span>
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border border-[#04231E]/10" style={{ color: C.gold, borderColor: C.gold }}>{c.category}</span>
-                            </div>
-                            <h4 className="text-xs font-bold text-[#04231E] mt-2">{c.title}</h4>
-                            <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{c.desc}</p>
-                            {c.featured === 1 && (
-                              <span className="inline-block mt-2 text-[8px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Featured Case study</span>
-                            )}
-                          </div>
-                          
-                          <div className="flex gap-2 border-t border-black/[0.04] pt-2">
-                            <button
-                              onClick={() => { setSelectedItem(c.id); setCaseForm(c); }}
-                              className="flex-1 text-center py-2 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Edit details
-                            </button>
-                            <button
-                              onClick={() => deleteCase(c.id)}
-                              className="px-4 py-2 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Add / Edit Case Form */}
-                  <form onSubmit={saveCase} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-                      {selectedItem ? 'Edit Clinical Case Details' : 'Add New Clinical Success Case'}
-                    </h4>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Number (e.g. Case #01)</label>
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto p-8 text-left">
+                
+                {/* HERO FORM */}
+                {modalSection === 'hero' && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(heroForm); }} className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Certification Badge</label>
                         <input
                           type="text"
-                          required
-                          value={caseForm.case_id}
-                          onChange={e => setCaseForm({ ...caseForm, case_id: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          value={heroForm.hero_badge}
+                          onChange={e => setHeroForm({ ...heroForm, hero_badge: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
-                        <select
-                          value={caseForm.category}
-                          onChange={e => setCaseForm({ ...caseForm, category: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        >
-                          <option value="Dental Implants">Dental Implants</option>
-                          <option value="Full-Mouth">Full-Mouth</option>
-                          <option value="Cosmetic Dentistry">Cosmetic Dentistry</option>
-                        </select>
-                      </div>
-
                       <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Title / Diagnosis</label>
-                        <input
-                          type="text"
-                          required
-                          value={caseForm.title}
-                          onChange={e => setCaseForm({ ...caseForm, title: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Treatment Description</label>
-                        <textarea
-                          rows="2"
-                          required
-                          value={caseForm.desc}
-                          onChange={e => setCaseForm({ ...caseForm, desc: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-
-                      {/* Before and After Image Uploads */}
-                      <div className="p-3 border border-black/[0.04] bg-[#FAF6F0] rounded-xl">
-                        <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Before Restoration Image</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="file"
-                            onChange={e => handleImageUpload(e, (path) => setCaseForm({ ...caseForm, beforeImage: path }))}
-                            className="text-[10px] file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-gray-100"
-                          />
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Main Heading (split into three segments)</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 mb-1">Prefix Text</label>
+                            <input
+                              type="text"
+                              value={heroForm.hero_title_left}
+                              onChange={e => setHeroForm({ ...heroForm, hero_title_left: e.target.value })}
+                              className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 mb-1">Gold Highlight (Italic)</label>
+                            <input
+                              type="text"
+                              value={heroForm.hero_title_gold}
+                              onChange={e => setHeroForm({ ...heroForm, hero_title_gold: e.target.value })}
+                              className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold text-gray-400 mb-1">Suffix Text</label>
+                            <input
+                              type="text"
+                              value={heroForm.hero_title_right}
+                              onChange={e => setHeroForm({ ...heroForm, hero_title_right: e.target.value })}
+                              className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            />
+                          </div>
                         </div>
-                        <input
-                          type="text"
-                          placeholder="Before path"
-                          value={caseForm.beforeImage}
-                          onChange={e => setCaseForm({ ...caseForm, beforeImage: e.target.value })}
-                          className="w-full mt-2 px-2 py-1 border rounded text-[10px]"
-                        />
-                      </div>
-
-                      <div className="p-3 border border-black/[0.04] bg-[#FAF6F0] rounded-xl">
-                        <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">After Restoration Image</label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="file"
-                            onChange={e => handleImageUpload(e, (path) => setCaseForm({ ...caseForm, afterImage: path }))}
-                            className="text-[10px] file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-gray-100"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="After path"
-                          value={caseForm.afterImage}
-                          onChange={e => setCaseForm({ ...caseForm, afterImage: e.target.value })}
-                          className="w-full mt-2 px-2 py-1 border rounded text-[10px]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Prosthetics Fitted</label>
-                        <input
-                          type="text"
-                          value={caseForm.prosthetics}
-                          onChange={e => setCaseForm({ ...caseForm, prosthetics: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          placeholder="e.g. Screw-retained Crown"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Treatment Duration</label>
-                        <input
-                          type="text"
-                          value={caseForm.duration}
-                          onChange={e => setCaseForm({ ...caseForm, duration: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          placeholder="e.g. 3 Months"
-                        />
                       </div>
 
                       <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Material Used</label>
-                        <input
-                          type="text"
-                          value={caseForm.material}
-                          onChange={e => setCaseForm({ ...caseForm, material: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          placeholder="e.g. Monolithic Zirconia"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-2 sm:col-span-2">
-                        <input
-                          type="checkbox"
-                          id="featuredToggle"
-                          checked={caseForm.featured === 1}
-                          onChange={e => setCaseForm({ ...caseForm, featured: e.target.checked ? 1 : 0 })}
-                          className="w-4 h-4 rounded text-gold-accent border-gray-300 focus:ring-gold-accent"
-                        />
-                        <label htmlFor="featuredToggle" className="text-xs font-bold text-gray-700">Set as Featured Case Study on website gallery hero banner</label>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      {selectedItem && (
-                        <button type="button" onClick={() => { setSelectedItem(null); setCaseForm({ id: null, case_id: '', category: 'Dental Implants', title: '', desc: '', beforeImage: '', afterImage: '', prosthetics: '', duration: '', material: '', featured: 0 }); }} className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider">Cancel Edit</button>
-                      )}
-                      <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
-                        {selectedItem ? 'Update Case' : 'Add Case'}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* ABOUT & TIMELINE FORM */}
-              {activeModal === 'about' && (
-                <div className="space-y-8">
-                  {/* Commitment Settings */}
-                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(aboutForm); }} className="space-y-4 p-6 border border-black/[0.06] bg-[#FAF6F0] rounded-3xl">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">Bio Commitment Section Settings</h4>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Commitment Title Banner</label>
-                        <input
-                          type="text"
-                          required
-                          value={aboutForm.commit_title}
-                          onChange={e => setAboutForm({ ...aboutForm, commit_title: e.target.value })}
-                          className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Commitment Text Description</label>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Description Paragraph</label>
                         <textarea
                           rows="3"
-                          required
-                          value={aboutForm.commit_desc}
-                          onChange={e => setAboutForm({ ...aboutForm, commit_desc: e.target.value })}
-                          className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-xs"
+                          value={heroForm.hero_desc}
+                          onChange={e => setHeroForm({ ...heroForm, hero_desc: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="p-3 border border-black/[0.04] bg-white rounded-xl">
-                          <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Performance Badge 1</label>
-                          <input type="text" value={aboutForm.commit_badge1_val} onChange={e => setAboutForm({ ...aboutForm, commit_badge1_val: e.target.value })} placeholder="Value (e.g. Top 1%)" className="w-full px-2 py-1 border rounded text-xs mb-1" />
-                          <input type="text" value={aboutForm.commit_badge1_lbl} onChange={e => setAboutForm({ ...aboutForm, commit_badge1_lbl: e.target.value })} placeholder="Label (e.g. Graduates)" className="w-full px-2 py-1 border rounded text-xs" />
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Hero Profile Picture (Upload)</label>
+                        <div className="flex items-center gap-3">
+                          {heroForm.hero_profile_img && (
+                            <img src={heroForm.hero_profile_img} className="w-10 h-10 object-cover rounded-lg border border-black/[0.08]" alt="Profile thumbnail" />
+                          )}
+                          <input
+                            type="file"
+                            onChange={e => handleImageUpload(e, (path) => setHeroForm({ ...heroForm, hero_profile_img: path }))}
+                            className="text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-gray-100 file:text-[#04231E] hover:file:bg-gray-200 cursor-pointer"
+                          />
                         </div>
-                        <div className="p-3 border border-black/[0.04] bg-white rounded-xl">
-                          <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Performance Badge 2</label>
-                          <input type="text" value={aboutForm.commit_badge2_val} onChange={e => setAboutForm({ ...aboutForm, commit_badge2_val: e.target.value })} placeholder="Value (e.g. Global)" className="w-full px-2 py-1 border rounded text-xs mb-1" />
-                          <input type="text" value={aboutForm.commit_badge2_lbl} onChange={e => setAboutForm({ ...aboutForm, commit_badge2_lbl: e.target.value })} placeholder="Label (e.g. Fellowship)" className="w-full px-2 py-1 border rounded text-xs" />
-                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Or Direct Image URL Path</label>
+                        <input
+                          type="text"
+                          value={heroForm.hero_profile_img}
+                          onChange={e => setHeroForm({ ...heroForm, hero_profile_img: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Floating Badge Specialty</label>
+                        <input
+                          type="text"
+                          value={heroForm.hero_badge_title}
+                          onChange={e => setHeroForm({ ...heroForm, hero_badge_title: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Floating Badge Subtitle</label>
+                        <input
+                          type="text"
+                          value={heroForm.hero_badge_desc}
+                          onChange={e => setHeroForm({ ...heroForm, hero_badge_desc: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
+                        />
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-2">
-                      <button type="submit" className="px-5 py-2.5 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>Update Bio Section</button>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08] hover:bg-black/[0.01]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Homepage Settings</button>
                     </div>
                   </form>
+                )}
 
-                  {/* Professional Credentials Timeline list */}
+                {/* STATS FORM */}
+                {modalSection === 'stats' && (
+                  <form onSubmit={saveStats} className="space-y-6">
+                    <div className="space-y-4">
+                      {statsForm.map((stat, i) => (
+                        <div key={stat.id || i} className="grid grid-cols-2 gap-4 items-center p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl">
+                          <div>
+                            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Stat Value</label>
+                            <input
+                              type="text"
+                              value={stat.value}
+                              onChange={(e) => {
+                                const newStats = [...statsForm];
+                                newStats[i].value = e.target.value;
+                                setStatsForm(newStats);
+                              }}
+                              className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1">Stat Label</label>
+                            <input
+                              type="text"
+                              value={stat.label}
+                              onChange={(e) => {
+                                const newStats = [...statsForm];
+                                newStats[i].label = e.target.value;
+                                setStatsForm(newStats);
+                              }}
+                              className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-sm"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Update Statistics</button>
+                    </div>
+                  </form>
+                )}
+
+                {/* SPECIALTIES FORM */}
+                {modalSection === 'specialties' && (
+                  <div className="space-y-8">
+                    {/* Current Specialties List */}
+                    <div className="space-y-3">
+                      <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Specialized Services</span>
+                      <div className="grid grid-cols-1 gap-3">
+                        {specialties.map(s => (
+                          <div key={s.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex justify-between items-center gap-4">
+                            <div className="flex items-center gap-4">
+                              <span className="text-3xl">{s.icon}</span>
+                              <div>
+                                <h4 className="text-xs font-bold text-[#04231E]">{s.title}</h4>
+                                <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{s.desc}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => { setSelectedItem(s.id); setSpecialtyForm(s); }}
+                                className="px-3.5 py-1.5 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => deleteSpecialty(s.id)}
+                                className="px-3.5 py-1.5 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Add / Edit Form */}
+                    <form onSubmit={saveSpecialty} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
+                        {selectedItem ? 'Edit Specialty Details' : 'Add New Service Specialty'}
+                      </h4>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Service Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={specialtyForm.title}
+                            onChange={e => setSpecialtyForm({ ...specialtyForm, title: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Icon Emoji (e.g. 🦷)</label>
+                          <input
+                            type="text"
+                            required
+                            value={specialtyForm.icon}
+                            onChange={e => setSpecialtyForm({ ...specialtyForm, icon: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-center text-xs"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Service Description</label>
+                          <input
+                            type="text"
+                            required
+                            value={specialtyForm.desc}
+                            onChange={e => setSpecialtyForm({ ...specialtyForm, desc: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Internal Target Link (optional, e.g. #implantology)</label>
+                          <input
+                            type="text"
+                            value={specialtyForm.link}
+                            onChange={e => setSpecialtyForm({ ...specialtyForm, link: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        {selectedItem && (
+                          <button type="button" onClick={() => { setSelectedItem(null); setSpecialtyForm({ id: null, title: '', desc: '', icon: '🦷', link: '' }); }} className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider">Cancel Edit</button>
+                        )}
+                        <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
+                          {selectedItem ? 'Update Specialty' : 'Add Specialty'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* GALLERY FORM */}
+                {modalSection === 'gallery' && (
+                  <div className="space-y-8">
+                    {/* Current Cases Grid */}
+                    <div className="space-y-3">
+                      <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Clinical Cases</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {cases.map(c => (
+                          <div key={c.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex flex-col justify-between space-y-4">
+                            <div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-gray-400">{c.case_id}</span>
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border border-[#04231E]/10" style={{ color: C.gold, borderColor: C.gold }}>{c.category}</span>
+                              </div>
+                              <h4 className="text-xs font-bold text-[#04231E] mt-2">{c.title}</h4>
+                              <p className="text-[10px] text-gray-500 mt-1 line-clamp-2">{c.desc}</p>
+                              {c.featured === 1 && (
+                                <span className="inline-block mt-2 text-[8px] font-bold tracking-widest uppercase text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Featured Case study</span>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-2 border-t border-black/[0.04] pt-2">
+                              <button
+                                onClick={() => { setSelectedItem(c.id); setCaseForm(c); }}
+                                className="flex-1 text-center py-2 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Edit details
+                              </button>
+                              <button
+                                onClick={() => deleteCase(c.id)}
+                                className="px-4 py-2 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Add / Edit Case Form */}
+                    <form onSubmit={saveCase} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
+                        {selectedItem ? 'Edit Clinical Case Details' : 'Add New Clinical Success Case'}
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Number (e.g. Case #01)</label>
+                          <input
+                            type="text"
+                            required
+                            value={caseForm.case_id}
+                            onChange={e => setCaseForm({ ...caseForm, case_id: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
+                          <select
+                            value={caseForm.category}
+                            onChange={e => setCaseForm({ ...caseForm, category: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          >
+                            <option value="Dental Implants">Dental Implants</option>
+                            <option value="Full-Mouth">Full-Mouth</option>
+                            <option value="Cosmetic Dentistry">Cosmetic Dentistry</option>
+                          </select>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Title / Diagnosis</label>
+                          <input
+                            type="text"
+                            required
+                            value={caseForm.title}
+                            onChange={e => setCaseForm({ ...caseForm, title: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Case Treatment Description</label>
+                          <textarea
+                            rows="2"
+                            required
+                            value={caseForm.desc}
+                            onChange={e => setCaseForm({ ...caseForm, desc: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+
+                        {/* Before and After Image Uploads */}
+                        <div className="p-3 border border-black/[0.04] bg-[#FAF6F0] rounded-xl">
+                          <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Before Restoration Image</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              onChange={e => handleImageUpload(e, (path) => setCaseForm({ ...caseForm, beforeImage: path }))}
+                              className="text-[10px] file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-gray-100"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Before path"
+                            value={caseForm.beforeImage}
+                            onChange={e => setCaseForm({ ...caseForm, beforeImage: e.target.value })}
+                            className="w-full mt-2 px-2 py-1 border rounded text-[10px]"
+                          />
+                        </div>
+
+                        <div className="p-3 border border-black/[0.04] bg-[#FAF6F0] rounded-xl">
+                          <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">After Restoration Image</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="file"
+                              onChange={e => handleImageUpload(e, (path) => setCaseForm({ ...caseForm, afterImage: path }))}
+                              className="text-[10px] file:py-1 file:px-2 file:rounded-md file:border-0 file:bg-gray-100"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="After path"
+                            value={caseForm.afterImage}
+                            onChange={e => setCaseForm({ ...caseForm, afterImage: e.target.value })}
+                            className="w-full mt-2 px-2 py-1 border rounded text-[10px]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Prosthetics Fitted</label>
+                          <input
+                            type="text"
+                            value={caseForm.prosthetics}
+                            onChange={e => setCaseForm({ ...caseForm, prosthetics: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            placeholder="e.g. Screw-retained Crown"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Treatment Duration</label>
+                          <input
+                            type="text"
+                            value={caseForm.duration}
+                            onChange={e => setCaseForm({ ...caseForm, duration: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            placeholder="e.g. 3 Months"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Material Used</label>
+                          <input
+                            type="text"
+                            value={caseForm.material}
+                            onChange={e => setCaseForm({ ...caseForm, material: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            placeholder="e.g. Monolithic Zirconia"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-2 sm:col-span-2">
+                          <input
+                            type="checkbox"
+                            id="featuredToggle"
+                            checked={caseForm.featured === 1}
+                            onChange={e => setCaseForm({ ...caseForm, featured: e.target.checked ? 1 : 0 })}
+                            className="w-4 h-4 rounded text-gold-accent border-gray-300 focus:ring-gold-accent"
+                          />
+                          <label htmlFor="featuredToggle" className="text-xs font-bold text-gray-700">Set as Featured Case Study on website gallery hero banner</label>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-2">
+                        {selectedItem && (
+                          <button type="button" onClick={() => { setSelectedItem(null); setCaseForm({ id: null, case_id: '', category: 'Dental Implants', title: '', desc: '', beforeImage: '', afterImage: '', prosthetics: '', duration: '', material: '', featured: 0 }); }} className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider">Cancel Edit</button>
+                        )}
+                        <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
+                          {selectedItem ? 'Update Case' : 'Add Case'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* ABOUT FORM (Commitment Section Only) */}
+                {modalSection === 'about' && (
+                  <div className="space-y-8">
+                    <form onSubmit={(e) => { e.preventDefault(); saveSettings(aboutForm); }} className="space-y-4 p-6 border border-black/[0.06] bg-[#FAF6F0] rounded-3xl">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">Bio Commitment Section Settings</h4>
+                      
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Commitment Title Banner</label>
+                          <input
+                            type="text"
+                            required
+                            value={aboutForm.commit_title}
+                            onChange={e => setAboutForm({ ...aboutForm, commit_title: e.target.value })}
+                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Commitment Text Description</label>
+                          <textarea
+                            rows="3"
+                            required
+                            value={aboutForm.commit_desc}
+                            onChange={e => setAboutForm({ ...aboutForm, commit_desc: e.target.value })}
+                            className="w-full px-3 py-2.5 rounded-lg border border-black/[0.08] focus:outline-none bg-white text-xs"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="p-3 border border-black/[0.04] bg-white rounded-xl">
+                            <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Performance Badge 1</label>
+                            <input type="text" value={aboutForm.commit_badge1_val} onChange={e => setAboutForm({ ...aboutForm, commit_badge1_val: e.target.value })} placeholder="Value (e.g. Top 1%)" className="w-full px-2 py-1 border rounded text-xs mb-1" />
+                            <input type="text" value={aboutForm.commit_badge1_lbl} onChange={e => setAboutForm({ ...aboutForm, commit_badge1_lbl: e.target.value })} placeholder="Label (e.g. Graduates)" className="w-full px-2 py-1 border rounded text-xs" />
+                          </div>
+                          <div className="p-3 border border-black/[0.04] bg-white rounded-xl">
+                            <label className="block text-[9px] font-bold uppercase text-gray-400 mb-1">Performance Badge 2</label>
+                            <input type="text" value={aboutForm.commit_badge2_val} onChange={e => setAboutForm({ ...aboutForm, commit_badge2_val: e.target.value })} placeholder="Value (e.g. Global)" className="w-full px-2 py-1 border rounded text-xs mb-1" />
+                            <input type="text" value={aboutForm.commit_badge2_lbl} onChange={e => setAboutForm({ ...aboutForm, commit_badge2_lbl: e.target.value })} placeholder="Label (e.g. Fellowship)" className="w-full px-2 py-1 border rounded text-xs" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-2">
+                        <button type="submit" className="px-5 py-2.5 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>Update Bio Section</button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* CREDENTIALS FORM (Timeline) */}
+                {modalSection === 'credentials' && (
                   <div className="space-y-4">
                     <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Manage Timeline Credentials</span>
                     <div className="space-y-3">
@@ -1116,243 +1179,294 @@ export default function Dashboard() {
                       </div>
                     </form>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* AWARD FORM */}
-              {activeModal === 'award' && (
-                <form onSubmit={(e) => { e.preventDefault(); saveSettings(awardForm); }} className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Award Title</label>
-                      <input
-                        type="text"
-                        required
-                        value={awardForm.primary_award_title}
-                        onChange={e => setAwardForm({ ...awardForm, primary_award_title: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Award Institution / Description</label>
-                      <input
-                        type="text"
-                        required
-                        value={awardForm.primary_award_desc}
-                        onChange={e => setAwardForm({ ...awardForm, primary_award_desc: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
-                    <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
-                    <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Reward Details</button>
-                  </div>
-                </form>
-              )}
-
-              {/* CLINIC INFO FORM */}
-              {activeModal === 'clinic' && (
-                <form onSubmit={(e) => { e.preventDefault(); saveSettings(clinicForm); }} className="space-y-6">
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Telephone Contact</label>
-                      <input
-                        type="text"
-                        required
-                        value={clinicForm.clinic_phone}
-                        onChange={e => setClinicForm({ ...clinicForm, clinic_phone: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Location Address</label>
-                      <textarea
-                        rows="2"
-                        required
-                        value={clinicForm.clinic_location}
-                        onChange={e => setClinicForm({ ...clinicForm, clinic_location: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        value={clinicForm.clinic_email}
-                        onChange={e => setClinicForm({ ...clinicForm, clinic_email: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
-                    <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
-                    <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Clinic Settings</button>
-                  </div>
-                </form>
-              )}
-
-              {/* FOOTER BIO FORM */}
-              {activeModal === 'footer-bio' && (
-                <form onSubmit={(e) => { e.preventDefault(); saveSettings(footerBioForm); }} className="space-y-6">
-                  <div>
-                    <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Footer Short Bio Summary</label>
-                    <textarea
-                      rows="4"
-                      required
-                      value={footerBioForm.footer_bio_summary}
-                      onChange={e => setFooterBioForm({ ...footerBioForm, footer_bio_summary: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
-                    <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
-                    <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Bio Text</button>
-                  </div>
-                </form>
-              )}
-
-              {/* PATIENT RESOURCES FORM */}
-              {activeModal === 'patient-resources' && (
-                <div className="space-y-8">
-                  {/* Current Patient Resources List */}
-                  <div className="space-y-3">
-                    <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Patient Resources</span>
-                    <div className="grid grid-cols-1 gap-3">
-                      {patientResources.length === 0 && (
-                        <p className="text-xs text-gray-400 text-center py-4">No patient resources yet. Add one below.</p>
-                      )}
-                      {patientResources.map(r => (
-                        <div key={r.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex justify-between items-start gap-4">
-                          <div className="flex items-start gap-4 flex-1 min-w-0">
-                            <span className="text-2xl flex-shrink-0 mt-0.5">{r.icon}</span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-bold text-[#04231E] truncate">{r.title}</h4>
-                                <span className="text-[8px] font-bold px-2 py-0.5 rounded-full uppercase bg-[#04231E]/5 text-[#04231E]/60 flex-shrink-0">{r.category}</span>
+                {/* PATIENT RESOURCES FORM */}
+                {modalSection === 'patient-resources' && (
+                  <div className="space-y-8">
+                    {/* Current Patient Resources List */}
+                    <div className="space-y-3">
+                      <span className="block text-[10px] font-bold tracking-widest uppercase text-gray-400">Current Patient Resources</span>
+                      <div className="grid grid-cols-1 gap-3">
+                        {patientResources.length === 0 && (
+                          <p className="text-xs text-gray-400 text-center py-4">No patient resources yet. Add one below.</p>
+                        )}
+                        {patientResources.map(r => (
+                          <div key={r.id} className="p-4 border border-black/[0.04] bg-[#FAF6F0] rounded-2xl flex justify-between items-start gap-4">
+                            <div className="flex items-start gap-4 flex-1 min-w-0">
+                              <span className="text-2xl flex-shrink-0 mt-0.5">{r.icon}</span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-xs font-bold text-[#04231E] truncate">{r.title}</h4>
+                                  <span className="text-[8px] font-bold px-2 py-0.5 rounded-full uppercase bg-[#04231E]/5 text-[#04231E]/60 flex-shrink-0">{r.category}</span>
+                                </div>
+                                <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{r.description}</p>
                               </div>
-                              <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{r.description}</p>
+                            </div>
+                            <div className="flex gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => { setSelectedItem(r.id); setPatientResourceForm(r); }}
+                                className="px-3.5 py-1.5 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => deletePatientResource(r.id)}
+                                className="px-3.5 py-1.5 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
+                              >
+                                Delete
+                              </button>
                             </div>
                           </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <button
-                              onClick={() => { setSelectedItem(r.id); setPatientResourceForm(r); }}
-                              className="px-3.5 py-1.5 rounded-full border border-black/[0.08] hover:bg-white text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => deletePatientResource(r.id)}
-                              className="px-3.5 py-1.5 rounded-full border border-rose-200 text-rose-600 hover:bg-rose-50 text-[9px] font-bold tracking-wider uppercase transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Add / Edit Form */}
+                    <form onSubmit={savePatientResource} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
+                        {selectedItem ? 'Edit Patient Resource' : 'Add New Patient Resource'}
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Resource Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={patientResourceForm.title}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, title: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            placeholder="e.g. Pre-Operative Instructions"
+                          />
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Add / Edit Form */}
-                  <form onSubmit={savePatientResource} className="p-6 border border-black/[0.06] rounded-3xl space-y-4">
-                    <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">
-                      {selectedItem ? 'Edit Patient Resource' : 'Add New Patient Resource'}
-                    </h4>
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
+                          <select
+                            value={patientResourceForm.category}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, category: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          >
+                            <option value="Pre-Op Instructions">Pre-Op Instructions</option>
+                            <option value="Post-Op Care">Post-Op Care</option>
+                            <option value="General Info">General Info</option>
+                            <option value="FAQ">FAQ</option>
+                            <option value="Payment & Insurance">Payment & Insurance</option>
+                          </select>
+                        </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Resource Title</label>
-                        <input
-                          type="text"
-                          required
-                          value={patientResourceForm.title}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, title: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          placeholder="e.g. Pre-Operative Instructions"
-                        />
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Icon Emoji</label>
+                          <input
+                            type="text"
+                            required
+                            value={patientResourceForm.icon}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, icon: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-center text-xs"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Description</label>
+                          <textarea
+                            rows="3"
+                            required
+                            value={patientResourceForm.description}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, description: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">External Link (optional)</label>
+                          <input
+                            type="text"
+                            value={patientResourceForm.link}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, link: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                            placeholder="https://..."
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 mb-1">Sort Order</label>
+                          <input
+                            type="number"
+                            value={patientResourceForm.sort_order}
+                            onChange={e => setPatientResourceForm({ ...patientResourceForm, sort_order: parseInt(e.target.value) || 0 })}
+                            className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Category</label>
-                        <select
-                          value={patientResourceForm.category}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, category: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        >
-                          <option value="Pre-Op Instructions">Pre-Op Instructions</option>
-                          <option value="Post-Op Care">Post-Op Care</option>
-                          <option value="General Info">General Info</option>
-                          <option value="FAQ">FAQ</option>
-                          <option value="Payment & Insurance">Payment & Insurance</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Icon Emoji</label>
-                        <input
-                          type="text"
-                          required
-                          value={patientResourceForm.icon}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, icon: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-center text-xs"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Description</label>
-                        <textarea
-                          rows="3"
-                          required
-                          value={patientResourceForm.description}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, description: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">External Link (optional)</label>
-                        <input
-                          type="text"
-                          value={patientResourceForm.link}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, link: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                          placeholder="https://..."
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[10px] font-bold text-gray-400 mb-1">Sort Order</label>
-                        <input
-                          type="number"
-                          value={patientResourceForm.sort_order}
-                          onChange={e => setPatientResourceForm({ ...patientResourceForm, sort_order: parseInt(e.target.value) || 0 })}
-                          className="w-full px-3 py-2 rounded-lg border border-black/[0.08] focus:outline-none text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-end pt-2">
-                      {selectedItem && (
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedItem(null); setPatientResourceForm({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 }); }}
-                          className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider"
-                        >
-                          Cancel Edit
+                      <div className="flex gap-2 justify-end pt-2">
+                        {selectedItem && (
+                          <button
+                            type="button"
+                            onClick={() => { setSelectedItem(null); setPatientResourceForm({ id: null, title: '', category: 'General Info', description: '', icon: '📄', link: '', sort_order: 0 }); }}
+                            className="px-4 py-2 border rounded-full text-[10px] uppercase font-bold tracking-wider"
+                          >
+                            Cancel Edit
+                          </button>
+                        )}
+                        <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
+                          {selectedItem ? 'Update Resource' : 'Add Resource'}
                         </button>
-                      )}
-                      <button type="submit" className="px-5 py-2 text-white rounded-full text-[10px] uppercase font-bold tracking-wider" style={{ backgroundColor: C.forestGreen }}>
-                        {selectedItem ? 'Update Resource' : 'Add Resource'}
-                      </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* AWARD FORM */}
+                {modalSection === 'award' && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(awardForm); }} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Award Title</label>
+                        <input
+                          type="text"
+                          required
+                          value={awardForm.primary_award_title}
+                          onChange={e => setAwardForm({ ...awardForm, primary_award_title: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Award Institution / Description</label>
+                        <input
+                          type="text"
+                          required
+                          value={awardForm.primary_award_desc}
+                          onChange={e => setAwardForm({ ...awardForm, primary_award_desc: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Reward Details</button>
                     </div>
                   </form>
-                </div>
-              )}
+                )}
 
+                {/* CLINIC INFO FORM */}
+                {modalSection === 'clinic' && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(clinicForm); }} className="space-y-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Telephone Contact</label>
+                        <input
+                          type="text"
+                          required
+                          value={clinicForm.clinic_phone}
+                          onChange={e => setClinicForm({ ...clinicForm, clinic_phone: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Location Address</label>
+                        <textarea
+                          rows="2"
+                          required
+                          value={clinicForm.clinic_location}
+                          onChange={e => setClinicForm({ ...clinicForm, clinic_location: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Clinic Email Address</label>
+                        <input
+                          type="email"
+                          required
+                          value={clinicForm.clinic_email}
+                          onChange={e => setClinicForm({ ...clinicForm, clinic_email: e.target.value })}
+                          className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Clinic Settings</button>
+                    </div>
+                  </form>
+                )}
+
+                {/* FOOTER BIO FORM */}
+                {modalSection === 'footer-bio' && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(footerBioForm); }} className="space-y-6">
+                    <div>
+                      <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Footer Short Bio Summary</label>
+                      <textarea
+                        rows="4"
+                        required
+                        value={footerBioForm.footer_bio_summary}
+                        onChange={e => setFooterBioForm({ ...footerBioForm, footer_bio_summary: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Bio Text</button>
+                    </div>
+                  </form>
+                )}
+
+                {/* SUCCESS STORIES FORM */}
+                {modalSection === 'success-stories' && (
+                  <form onSubmit={(e) => { e.preventDefault(); saveSettings(storyForm); }} className="space-y-6">
+                    <div className="p-6 border border-black/[0.06] bg-[#FAF6F0] rounded-3xl space-y-4">
+                      <h4 className="text-sm font-bold uppercase tracking-widest text-gray-500">Patient Success Story</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Patient Testimonial Quote</label>
+                          <textarea
+                            rows="4"
+                            required
+                            value={storyForm.story_quote}
+                            onChange={e => setStoryForm({ ...storyForm, story_quote: e.target.value })}
+                            className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-gold-accent text-sm"
+                            placeholder="e.g. Dr. Popuri changed my life. I can smile confidently again..."
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Patient Name</label>
+                            <input
+                              type="text"
+                              required
+                              value={storyForm.story_patient_name}
+                              onChange={e => setStoryForm({ ...storyForm, story_patient_name: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
+                              placeholder="e.g. Sarah Mitchell"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Patient Role / Description</label>
+                            <input
+                              type="text"
+                              required
+                              value={storyForm.story_patient_role}
+                              onChange={e => setStoryForm({ ...storyForm, story_patient_role: e.target.value })}
+                              className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none text-sm"
+                              placeholder="e.g. Full-Mouth Reconstruction Patient"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-black/[0.06]">
+                      <button type="button" onClick={() => setActiveModal(null)} className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider border border-black/[0.08]">Cancel</button>
+                      <button type="submit" className="px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider text-white" style={{ backgroundColor: C.forestGreen }}>Save Success Story</button>
+                    </div>
+                  </form>
+                )}
+
+              </div>
             </div>
           </motion.div>
         </motion.div>
