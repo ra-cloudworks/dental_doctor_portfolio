@@ -46,6 +46,14 @@ const SECTION_TITLES = {
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [activeSidebarTab, setActiveSidebarTab] = useState('Home Page');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('dashboard_auth') === 'true';
+  });
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [bookings, setBookings] = useState([]);
   
   // Data states
   const [content, setContent] = useState({});
@@ -152,13 +160,14 @@ export default function Dashboard() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [resContent, resSpecialties, resCases, resTimeline, resStats, resPatientResources] = await Promise.all([
+      const [resContent, resSpecialties, resCases, resTimeline, resStats, resPatientResources, resBookings] = await Promise.all([
         fetch('/api/content').then(res => res.json()),
         fetch('/api/specialties').then(res => res.json()),
         fetch('/api/cases').then(res => res.json()),
         fetch('/api/timeline').then(res => res.json()),
         fetch('/api/stats').then(res => res.json()),
         fetch('/api/patient-resources').then(res => res.json()),
+        fetch('/api/bookings').then(res => res.ok ? res.json() : []).catch(() => []),
       ]);
 
       setContent(resContent);
@@ -167,6 +176,7 @@ export default function Dashboard() {
       setTimeline(resTimeline);
       setStats(resStats);
       setPatientResources(resPatientResources);
+      setBookings(Array.isArray(resBookings) ? resBookings : []);
       
       // Populate forms
       setHeroForm({
@@ -238,6 +248,32 @@ export default function Dashboard() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError('');
+    try {
+      const res = await fetch('/api/auth/dashboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: loginPassword }),
+      });
+      if (!res.ok) throw new Error('Invalid password');
+      sessionStorage.setItem('dashboard_auth', 'true');
+      setIsAuthenticated(true);
+    } catch (err) {
+      setLoginError('Invalid password. Please try again.');
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('dashboard_auth');
+    setIsAuthenticated(false);
+    setLoginPassword('');
+  };
 
   // Handle generic image upload to backend
   const handleImageUpload = async (e, callback) => {
@@ -454,6 +490,46 @@ export default function Dashboard() {
     }
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#FAF6F0]" style={{ fontFamily: C.sans }}>
+        <div className="bg-white rounded-[2rem] p-10 shadow-lg border border-black/[0.04] max-w-sm w-full mx-4 text-center space-y-6">
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center" style={{ backgroundColor: 'rgba(4,35,30,0.05)' }}>
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: C.gold }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-2xl font-normal" style={{ fontFamily: C.serif, color: C.forestGreen }}>Dashboard Access</h2>
+            <p className="text-gray-500 text-xs font-light mt-2">Enter the admin password to access the CMS panel.</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              value={loginPassword}
+              onChange={e => { setLoginPassword(e.target.value); setLoginError(''); }}
+              placeholder="Enter password"
+              className="w-full px-4 py-3 rounded-xl border border-black/[0.08] focus:outline-none focus:border-[var(--color-gold-accent)] text-sm text-center"
+              autoFocus
+            />
+            {loginError && <p className="text-rose-500 text-xs">{loginError}</p>}
+            <button
+              type="submit"
+              disabled={loginLoading}
+              className="w-full font-bold py-3.5 rounded-full text-[11px] tracking-widest uppercase text-white transition-all hover:opacity-90 disabled:opacity-50 cursor-pointer"
+              style={{ backgroundColor: C.forestGreen }}
+            >
+              {loginLoading ? 'Verifying...' : 'Unlock Dashboard'}
+            </button>
+          </form>
+          <Link to="/" className="inline-block text-xs font-semibold uppercase tracking-wider hover:underline" style={{ color: C.gold }}>
+            Return to Site
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FAF6F0]" style={{ fontFamily: C.sans }}>
@@ -501,24 +577,62 @@ export default function Dashboard() {
               <input
                 type="text"
                 placeholder="Search portfolio..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 className="w-full sm:w-60 pl-9 pr-4 py-2 text-xs rounded-full border border-black/[0.08] bg-black/[0.01] focus:bg-white focus:outline-none focus:border-gold-accent transition-all duration-300"
               />
-              <svg className="w-3.5 h-3.5 absolute left-3.5 top-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-black transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+              <svg className="w-3.5 h-3.5 absolute left-3.5 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
             
             {/* Notification Bell */}
-            <button className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04]">
+            <button
+              onClick={() => {
+                const pending = bookings.filter(b => b.status === 'pending').length;
+                alert(pending > 0 ? `You have ${pending} pending consultation request(s).` : 'No new notifications.');
+              }}
+              className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04] relative"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
+              {bookings.filter(b => b.status === 'pending').length > 0 && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
+                  {bookings.filter(b => b.status === 'pending').length}
+                </span>
+              )}
             </button>
             
             {/* Help */}
-            <button className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04] hidden sm:block">
+            <a
+              href="https://github.com/anomalyco/opencode/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04] hidden sm:block"
+              title="Get Help"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </a>
+            
+            {/* Logout */}
+            <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-rose-500 transition-colors rounded-full bg-black/[0.02] border border-black/[0.04]"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
             
@@ -550,6 +664,8 @@ export default function Dashboard() {
             setCaseForm={setCaseForm}
             setSpecialtyForm={setSpecialtyForm}
             featuredCase={featuredCase}
+            searchQuery={searchQuery}
+            specialties={specialties}
           />
         )}
         {activeTab === 'Content Library' && (
@@ -565,7 +681,7 @@ export default function Dashboard() {
           />
         )}
         {activeTab === 'Analytics' && (
-          <AnalyticsTab C={C} />
+          <AnalyticsTab C={C} stats={stats} bookings={bookings} />
         )}
       </main>
 

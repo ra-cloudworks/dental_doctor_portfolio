@@ -78,16 +78,23 @@ export default function SuccessStories() {
               <motion.span
                 className="text-7xl font-normal leading-none block select-none -mb-2"
                 style={{ fontFamily: C.serif, color: C.gold }}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
+                initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.4 }}
                 viewport={{ once: true }}
               >
                 &ldquo;
               </motion.span>
 
               <blockquote className="text-xl sm:text-2xl lg:text-[28px] font-light italic text-white leading-relaxed" style={{ fontFamily: C.serif }}>
-                {story.quote}
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.2, delay: 0.6 }}
+                >
+                  {story.quote}
+                </motion.span>
               </blockquote>
 
               <div className="flex items-center gap-4 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}>

@@ -57,14 +57,19 @@ export default function CredentialsSection() {
             </ScrollReveal>
 
             <div className="relative pl-10 pt-2 space-y-10">
-              {/* Vertical line — centered on the dot position */}
-              <div
+              {/* Vertical line — animated draw-in */}
+              <motion.div
                 className="absolute top-1 bottom-1 rounded-full"
                 style={{
                   left: LINE_LEFT,
                   width: 1.5,
                   backgroundColor: 'rgba(4,35,30,0.12)',
+                  transformOrigin: 'top',
                 }}
+                initial={{ scaleY: 0 }}
+                whileInView={{ scaleY: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1], delay: 0.3 }}
               />
 
               {timelineItems.map((item, i) => (

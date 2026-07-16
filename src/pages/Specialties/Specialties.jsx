@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useBooking } from '../../components/BookingContext';
 import ScrollReveal from '../../components/ScrollReveal';
+import CardTilt from '../../components/CardTilt';
+import RippleButton from '../../components/RippleButton';
 import profileImg from '../../assets/profile.jpeg';
 
 const C = {
@@ -20,6 +23,7 @@ const BADGE_ITEMS = [
 ];
 
 export default function Specialties() {
+  const { openBooking } = useBooking();
   const [services, setServices] = useState([
     { title: 'Complete Mouth Rehabilitation', desc: 'Comprehensive restoration of entire dentition with precision and aesthetics.', icon: '🦷', link: '' },
     { title: 'Dental Implants',              desc: 'State-of-the-art implant placement with osseointegration techniques.', icon: '🔧', link: '#implantology' },
@@ -71,7 +75,16 @@ export default function Specialties() {
                 <p className="text-gray-600 text-base leading-relaxed" style={{ maxWidth: 520 }}>Precision-driven prosthodontics merging biological integrity with elite aesthetic outcomes. Dr. Popuri utilizes evidence-based protocols and state-of-the-art technology to restore complex dental architectures.</p>
                 <div className="flex flex-wrap gap-4">
                   {BADGE_ITEMS.map((item, i) => (
-                    <motion.div key={i} className="flex items-center gap-2 px-6 py-3 rounded-full" style={{ background: 'rgba(4,35,30,0.04)', border: '1px solid rgba(4,35,30,0.12)' }} whileHover={{ backgroundColor: 'rgba(184,150,108,0.10)', borderColor: C.gold }}>
+                    <motion.div
+                      key={i}
+                      className="flex items-center gap-2 px-6 py-3 rounded-full"
+                      style={{ background: 'rgba(4,35,30,0.04)', border: '1px solid rgba(4,35,30,0.12)' }}
+                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.3 + i * 0.1, type: 'spring', stiffness: 200 }}
+                      whileHover={{ backgroundColor: 'rgba(184,150,108,0.10)', borderColor: C.gold, scale: 1.05 }}
+                    >
                       <span className="font-bold text-lg" style={{ color: C.gold }}>{item.icon}</span>
                       <span className="font-semibold text-sm" style={{ color: C.forestGreen }}>{item.badge}</span>
                     </motion.div>
@@ -105,12 +118,18 @@ export default function Specialties() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((s, i) => (
               <ScrollReveal key={i} delay={i * 0.08}>
-                <motion.div className="rounded-2xl p-8 shadow-md bg-white text-left h-full" style={{ borderTop: `4px solid ${C.gold}` }} whileHover={{ y: -8, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.12)' }} transition={{ duration: 0.3 }}>
-                  <div className="text-5xl mb-4">{s.icon}</div>
-                  <h3 className="text-xl font-semibold mb-3" style={{ color: C.forestGreen }}>{s.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">{s.desc}</p>
-                  <div className="mt-6 inline-block font-bold text-lg transition-transform duration-300 group-hover:translate-x-2" style={{ color: C.gold }}>→</div>
-                </motion.div>
+                <CardTilt maxTilt={8} scale={1.02}>
+                  <motion.div className="rounded-2xl p-8 shadow-md bg-white text-left h-full" style={{ borderTop: `4px solid ${C.gold}` }} whileHover={{ y: -8, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.12)' }} transition={{ duration: 0.3 }}>
+                    <motion.div
+                      className="text-5xl mb-4 inline-block"
+                      whileHover={{ scale: 1.2, rotate: 5 }}
+                      transition={{ type: 'spring', stiffness: 400 }}
+                    >{s.icon}</motion.div>
+                    <h3 className="text-xl font-semibold mb-3" style={{ color: C.forestGreen }}>{s.title}</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">{s.desc}</p>
+                    <div className="mt-6 inline-block font-bold text-lg transition-transform duration-300 group-hover:translate-x-2" style={{ color: C.gold }}>→</div>
+                  </motion.div>
+                </CardTilt>
               </ScrollReveal>
             ))}
           </div>
@@ -196,9 +215,15 @@ export default function Specialties() {
           <div className="max-w-4xl mx-auto space-y-6">
             <h2 className="text-4xl sm:text-5xl font-normal text-white" style={{ fontFamily: C.serif }}>Ready to Transform Your Smile?</h2>
             <p className="text-sm leading-relaxed max-w-2xl mx-auto font-light" style={{ color: 'rgba(255,255,255,0.70)' }}>Schedule a consultation with Dr. Chandrika Lakshmi Popuri today and discover how we can restore your smile to its full potential.</p>
-            <Link to="/book" className="inline-block font-bold py-4 px-10 rounded-lg transition-all duration-300 hover:shadow-xl hover:scale-105 text-sm tracking-widest uppercase text-center cursor-pointer" style={{ backgroundColor: '#fff', color: C.forestGreen }}>
+            <motion.button
+              onClick={openBooking}
+              className="inline-block font-bold py-4 px-10 rounded-lg transition-all duration-300 hover:shadow-xl text-sm tracking-widest uppercase text-center cursor-pointer"
+              style={{ backgroundColor: '#fff', color: C.forestGreen }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+            >
               Book a Consultation
-            </Link>
+            </motion.button>
           </div>
         </ScrollReveal>
       </section>

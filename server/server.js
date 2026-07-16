@@ -287,6 +287,89 @@ app.delete('/api/patient-resources/:id', async (req, res) => {
   }
 });
 
+// 8. Bookings Endpoint
+app.post('/api/bookings', async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, preferredDate, specialty, message } = req.body;
+    if (!firstName || !lastName || !email || !phone) {
+      return res.status(400).json({ error: 'Name, email, and phone are required.' });
+    }
+    const result = await query.run(
+      'INSERT INTO bookings (firstName, lastName, email, phone, preferredDate, specialty, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [firstName, lastName, email, phone, preferredDate || '', specialty || '', message || '']
+    );
+    res.json({ success: true, id: result.id, message: 'Consultation request submitted successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/bookings', async (req, res) => {
+  try {
+    const rows = await query.all('SELECT * FROM bookings ORDER BY createdAt DESC');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/bookings/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body;
+    await query.run('UPDATE bookings SET status = ? WHERE id = ?', [status, req.params.id]);
+    res.json({ success: true, message: 'Booking status updated.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 9. Analytics Endpoints
+app.get('/api/analytics', async (req, res) => {
+  try {
+    const totalViews = await query.all('SELECT SUM(views) as total FROM analytics');
+    const byPage = await query.all('SELECT page, SUM(views) as views FROM analytics GROUP BY page ORDER BY views DESC');
+    const recent = await query.all('SELECT date, SUM(views) as views FROM analytics GROUP BY date ORDER BY date DESC LIMIT 30');
+    res.json({
+      totalViews: totalViews[0]?.total || 0,
+      byPage,
+      recent,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/analytics/track', async (req, res) => {
+  try {
+    const { page } = req.body;
+    const today = new Date().toISOString().split('T')[0];
+    const existing = await query.all('SELECT id FROM analytics WHERE page = ? AND date = ?', [page || 'home', today]);
+    if (existing.length > 0) {
+      await query.run('UPDATE analytics SET views = views + 1 WHERE id = ?', [existing[0].id]);
+    } else {
+      await query.run('INSERT INTO analytics (page, views, date) VALUES (?, 1, ?)', [page || 'home', today]);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Dashboard auth check
+app.post('/api/auth/dashboard', async (req, res) => {
+  try {
+    const { password } = req.body;
+    const adminPassword = process.env.DASHBOARD_PASSWORD || 'admin123';
+    if (password === adminPassword) {
+      res.json({ success: true, token: Buffer.from(`admin:${Date.now()}`).toString('base64') });
+    } else {
+      res.status(401).json({ error: 'Invalid credentials.' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Start Express Server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

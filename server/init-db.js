@@ -74,6 +74,26 @@ async function seed() {
       sort_order INTEGER DEFAULT 0
     )`);
 
+    await runAsync(`CREATE TABLE IF NOT EXISTS bookings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      firstName TEXT,
+      lastName TEXT,
+      email TEXT,
+      phone TEXT,
+      preferredDate TEXT,
+      specialty TEXT,
+      message TEXT,
+      status TEXT DEFAULT 'pending',
+      createdAt TEXT DEFAULT (datetime('now'))
+    )`);
+
+    await runAsync(`CREATE TABLE IF NOT EXISTS analytics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page TEXT,
+      views INTEGER DEFAULT 0,
+      date TEXT DEFAULT (date('now'))
+    )`);
+
     // 2. Clear existing entries to prevent duplicates (except settings where we replace)
     await runAsync('DELETE FROM specialties');
     await runAsync('DELETE FROM stats');

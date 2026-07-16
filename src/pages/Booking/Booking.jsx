@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../../components/ScrollReveal';
+import RippleButton from '../../components/RippleButton';
 
 const C = {
   creamBg:     'var(--color-cream-bg)',
@@ -53,10 +54,23 @@ export default function Booking() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setTimeout(() => { setIsSubmitting(false); setSubmitSuccess(true); setFormData({ firstName: '', lastName: '', email: '', phone: '', preferredDate: '', specialty: 'implantology', message: '' }); }, 1500);
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!res.ok) throw new Error('Submission failed');
+      setSubmitSuccess(true);
+      setFormData({ firstName: '', lastName: '', email: '', phone: '', preferredDate: '', specialty: 'implantology', message: '' });
+    } catch (err) {
+      alert('Failed to submit your request. Please try again or call us directly.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const toggleFaq = (index) => setOpenFaqIndex(prev => prev === index ? null : index);
@@ -88,49 +102,60 @@ export default function Booking() {
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">First Name</label>
-                      <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Rajeswari" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Last Name</label>
-                      <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required placeholder="e.g. Kumar" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Email Address</label>
-                      <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="e.g. rajeswari.k@example.com" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Phone Number</label>
-                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required placeholder="e.g. +91 98765 43210" className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
+                  <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }}
+                    variants={{ visible: { transition: { staggerChildren: 0.08 } } }}>
+                    {[{ name: 'firstName', label: 'First Name', placeholder: 'e.g. Rajeswari', type: 'text' },
+                      { name: 'lastName', label: 'Last Name', placeholder: 'e.g. Kumar', type: 'text' }].map((field) => (
+                      <motion.div key={field.name} className="space-y-2"
+                        variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}>
+                        <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">{field.label}</label>
+                        <input type={field.type} name={field.name} value={formData[field.name]} onChange={handleChange} required placeholder={field.placeholder}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]/30 focus:border-[var(--color-gold-accent)] transition-all text-sm font-light" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }}
+                    variants={{ visible: { transition: { staggerChildren: 0.08, delayChildren: 0.16 } } }}>
+                    {[{ name: 'email', label: 'Email Address', placeholder: 'e.g. rajeswari.k@example.com', type: 'email' },
+                      { name: 'phone', label: 'Phone Number', placeholder: 'e.g. +91 98765 43210', type: 'tel' }].map((field) => (
+                      <motion.div key={field.name} className="space-y-2"
+                        variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}>
+                        <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">{field.label}</label>
+                        <input type={field.type} name={field.name} value={formData[field.name]} onChange={handleChange} required placeholder={field.placeholder}
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]/30 focus:border-[var(--color-gold-accent)] transition-all text-sm font-light" />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                  <motion.div className="grid grid-cols-1 sm:grid-cols-2 gap-6" initial="hidden" whileInView="visible" viewport={{ once: true }}
+                    variants={{ visible: { transition: { staggerChildren: 0.08, delayChildren: 0.32 } } }}>
+                    <motion.div className="space-y-2" variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}>
                       <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Preferred Date</label>
-                      <input type="date" name="preferredDate" value={formData.preferredDate} onChange={handleChange} required className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light" />
-                    </div>
-                    <div className="space-y-2">
+                      <input type="date" name="preferredDate" value={formData.preferredDate} onChange={handleChange} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]/30 focus:border-[var(--color-gold-accent)] transition-all text-sm font-light" />
+                    </motion.div>
+                    <motion.div className="space-y-2" variants={{ hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } }}>
                       <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Focus Area</label>
-                      <select name="specialty" value={formData.specialty} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] bg-white transition-all text-sm font-light">
+                      <select name="specialty" value={formData.specialty} onChange={handleChange}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]/30 focus:border-[var(--color-gold-accent)] bg-white transition-all text-sm font-light">
                         <option value="implantology">Dental Implantology</option>
                         <option value="rehabilitation">Full-Mouth Rehabilitation</option>
                         <option value="cosmetic">Cosmetic Dentistry</option>
                         <option value="prosthodontics">General Prosthodontics</option>
                         <option value="other">Second Opinion / Other</option>
                       </select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
+                    </motion.div>
+                  </motion.div>
+                  <motion.div className="space-y-2" initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.48 }}>
                     <label className="block text-[10px] font-bold tracking-wider uppercase text-gray-500">Brief Case Summary / Notes</label>
-                    <textarea name="message" value={formData.message} onChange={handleChange} rows="4" placeholder="Describe your current dental status, missing teeth, active restorations, or diagnostic goals..." className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[var(--color-gold-accent)] transition-all text-sm font-light resize-y" />
-                  </div>
-                  <motion.button type="submit" disabled={isSubmitting} className="w-full font-bold py-4 rounded-xl text-[11px] tracking-widest uppercase text-white shadow-md transition-all duration-300 hover:shadow-lg active:translate-y-[1px] disabled:opacity-50 cursor-pointer" style={{ backgroundColor: C.forestGreen }} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                    {isSubmitting ? 'Processing Request...' : 'Send Consultation Request'}
-                  </motion.button>
+                    <textarea name="message" value={formData.message} onChange={handleChange} rows="4" placeholder="Describe your current dental status, missing teeth, active restorations, or diagnostic goals..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-gold-accent)]/30 focus:border-[var(--color-gold-accent)] transition-all text-sm font-light resize-y" />
+                  </motion.div>
+                  <motion.div initial={{ opacity: 0, y: 15 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.56 }}>
+                    <RippleButton type="submit" disabled={isSubmitting} variant="dark" size="lg"
+                      className="w-full cursor-pointer disabled:opacity-50">
+                      {isSubmitting ? 'Processing Request...' : 'Send Consultation Request'}
+                    </RippleButton>
+                  </motion.div>
                 </form>
               )}
             </div>

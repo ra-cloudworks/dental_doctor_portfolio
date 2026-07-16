@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
 
@@ -11,6 +11,7 @@ const C = {
 };
 
 export default function Footer() {
+  const navigate = useNavigate();
   const [content, setContent] = useState({
     clinic_phone: '+91 (0) 40 2345 6789',
     clinic_location: 'Specialist Restorative Wing, Premium Dental Care, Jubilee Hills, Hyderabad, Telangana',
@@ -26,12 +27,26 @@ export default function Footer() {
   }, []);
 
   const quickLinks = [
-    { label: 'Clinical Profile',   href: '/#clinical' },
-    { label: 'Specialties',        href: '/specialties' },
-    { label: 'Implantology',       href: '/specialties#implantology' },
-    { label: 'Clinical Gallery',   href: '/gallery' },
-    { label: 'Patient Resources',  href: '/book#faq' },
+    { label: 'Clinical Profile',   href: '/#clinical', needsNavigate: true },
+    { label: 'Specialties',        href: '/specialties', needsNavigate: false },
+    { label: 'Implantology',       href: '/specialties#implantology', needsNavigate: true },
+    { label: 'Clinical Gallery',   href: '/gallery', needsNavigate: false },
+    { label: 'Patient Resources',  href: '/book#faq', needsNavigate: true },
   ];
+
+  const handleQuickLink = (e, link) => {
+    if (link.needsNavigate) {
+      e.preventDefault();
+      const [path, hash] = link.href.split('#');
+      navigate(path);
+      if (hash) {
+        setTimeout(() => {
+          const el = document.getElementById(hash);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  };
 
   return (
     <footer style={{ backgroundColor: C.forestGreen, fontFamily: C.sans, color: '#fff' }}>
@@ -55,10 +70,10 @@ export default function Footer() {
 
           <ScrollReveal delay={0.1} className="md:col-span-3 space-y-5">
             <h3 className="text-[11px] font-bold tracking-widest uppercase" style={{ color: C.gold }}>Quick Links</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-3 stagger-children">
               {quickLinks.map((lk, i) => (
                 <li key={i}>
-                  <Link to={lk.href} className="text-xs sm:text-sm font-light block py-0.5 transition-colors duration-200 hover:text-[var(--color-gold-accent)]" style={{ color: 'rgba(255,255,255,0.65)' }}>{lk.label}</Link>
+                  <Link to={lk.href} onClick={(e) => handleQuickLink(e, lk)} className="text-xs sm:text-sm font-light block py-0.5 transition-all duration-200 hover:text-[var(--color-gold-accent)] hover:translate-x-1" style={{ color: 'rgba(255,255,255,0.65)' }}>{lk.label}</Link>
                 </li>
               ))}
             </ul>
@@ -83,19 +98,21 @@ export default function Footer() {
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-7 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-          <p className="text-xs font-light" style={{ color: 'rgba(255,255,255,0.45)' }}>&copy; 2026 Dr. Chandrika Lakshmi Popuri. All Rights Reserved. Prosthodontics &amp; Implant Specialist.</p>
-          <div className="flex flex-wrap justify-center gap-4 text-xs font-light" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            {['Privacy Policy', 'Terms of Service', 'Patient Privacy (HIPAA)'].map((t, i) => (
-              <span key={i} className="flex items-center gap-4">
-                {i > 0 && <span>&bull;</span>}
-                <a href={`#${t.toLowerCase().replace(/\s/g, '-')}`} className="transition-colors duration-200 hover:text-[var(--color-gold-accent)]">{t}</a>
-              </span>
-            ))}
+      <ScrollReveal delay={0.2}>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.10)' }}>
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-16 py-7 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+            <p className="text-xs font-light" style={{ color: 'rgba(255,255,255,0.45)' }}>&copy; 2026 Dr. Chandrika Lakshmi Popuri. All Rights Reserved. Prosthodontics &amp; Implant Specialist.</p>
+            <div className="flex flex-wrap justify-center gap-4 text-xs font-light" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              {['Privacy Policy', 'Terms of Service', 'Patient Privacy (HIPAA)'].map((t, i) => (
+                <span key={i} className="flex items-center gap-4">
+                  {i > 0 && <span>&bull;</span>}
+                  <a href={`#${t.toLowerCase().replace(/\s/g, '-')}`} className="transition-colors duration-200 hover:text-[var(--color-gold-accent)]">{t}</a>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollReveal>
     </footer>
   );
 }

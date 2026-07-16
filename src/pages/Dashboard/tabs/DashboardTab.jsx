@@ -1,10 +1,90 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function DashboardTab({ C, content, activeSidebarTab, setActiveSidebarTab, setActiveModal, setSelectedItem, saveStatus, setHeroForm, cases, timeline, patientResources, setPatientResourceForm, setAboutForm, setCaseForm, setSpecialtyForm, featuredCase }) {
+export default function DashboardTab({ C, content, activeSidebarTab, setActiveSidebarTab, setActiveModal, setSelectedItem, saveStatus, setHeroForm, cases, timeline, patientResources, setPatientResourceForm, setAboutForm, setCaseForm, setSpecialtyForm, featuredCase, searchQuery, specialties }) {
+  
+  const searchLower = (searchQuery || '').toLowerCase();
+  const matchedSpecialties = searchLower ? specialties.filter(s => s.title.toLowerCase().includes(searchLower) || s.desc.toLowerCase().includes(searchLower)) : [];
+  const matchedCases = searchLower ? cases.filter(c => c.title.toLowerCase().includes(searchLower) || c.desc.toLowerCase().includes(searchLower) || c.case_id.toLowerCase().includes(searchLower)) : [];
+  const matchedTimeline = searchLower ? timeline.filter(t => t.title.toLowerCase().includes(searchLower) || t.institution.toLowerCase().includes(searchLower)) : [];
+  const isSearching = searchLower.length > 0;
+
   return (
     <>
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    {/* Search Results Overlay */}
+    {isSearching && (
+      <div className="mb-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-normal" style={{ fontFamily: C.serif, color: C.forestGreen }}>
+            Search Results for "{searchQuery}"
+          </h2>
+          <span className="text-xs text-gray-400 font-medium">
+            {matchedSpecialties.length + matchedCases.length + matchedTimeline.length} result(s) found
+          </span>
+        </div>
+
+        {matchedSpecialties.length > 0 && (
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">Specialties</span>
+            {matchedSpecialties.map(s => (
+              <div key={s.id} className="bg-white p-4 rounded-2xl border border-black/[0.04] flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{s.icon}</span>
+                  <div>
+                    <h4 className="text-xs font-bold" style={{ color: C.forestGreen }}>{s.title}</h4>
+                    <p className="text-[10px] text-gray-400 line-clamp-1">{s.desc}</p>
+                  </div>
+                </div>
+                <button onClick={() => { setSelectedItem(s.id); setSpecialtyForm(s); setActiveModal('specialties'); }} className="px-3 py-1.5 rounded-full border border-black/[0.08] text-[9px] font-bold uppercase hover:bg-white transition-colors">Edit</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matchedCases.length > 0 && (
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">Clinical Cases</span>
+            {matchedCases.map(c => (
+              <div key={c.id} className="bg-white p-4 rounded-2xl border border-black/[0.04] flex justify-between items-center">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400">{c.case_id}</span>
+                  <h4 className="text-xs font-bold" style={{ color: C.forestGreen }}>{c.title}</h4>
+                  <p className="text-[10px] text-gray-400 line-clamp-1">{c.desc}</p>
+                </div>
+                <button onClick={() => { setSelectedItem(c.id); setCaseForm(c); setActiveModal('gallery'); }} className="px-3 py-1.5 rounded-full border border-black/[0.08] text-[9px] font-bold uppercase hover:bg-white transition-colors">Edit</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matchedTimeline.length > 0 && (
+          <div className="space-y-3">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-gray-400">Credentials</span>
+            {matchedTimeline.map(t => (
+              <div key={t.id} className="bg-white p-4 rounded-2xl border border-black/[0.04] flex justify-between items-center">
+                <div>
+                  <span className="text-[8px] font-bold tracking-widest uppercase" style={{ color: C.gold }}>{t.tag}</span>
+                  <h4 className="text-xs font-bold" style={{ color: C.forestGreen }}>{t.title}</h4>
+                  <p className="text-[10px] text-gray-400">{t.institution}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {matchedSpecialties.length === 0 && matchedCases.length === 0 && matchedTimeline.length === 0 && (
+          <div className="bg-white p-12 rounded-2xl border border-black/[0.04] text-center">
+            <p className="text-gray-400 text-sm font-light">No results match your search. Try different keywords.</p>
+          </div>
+        )}
+
+        <div className="border-t border-black/[0.06] pt-8">
+          <h3 className="text-lg font-normal mb-4" style={{ fontFamily: C.serif }}>Portfolio Overview</h3>
+        </div>
+      </div>
+    )}
+
+<div className={`grid grid-cols-1 lg:grid-cols-12 gap-8 items-start ${isSearching ? 'opacity-50 pointer-events-none' : ''}`}>
         
         {/* LEFT SIDEBAR (Col span 3) */}
         <aside className="lg:col-span-3 space-y-6">
@@ -59,7 +139,13 @@ export default function DashboardTab({ C, content, activeSidebarTab, setActiveSi
 
           {/* Action button */}
           <button
-            onClick={() => alert('All changes have been compiled and published dynamically in real-time!')}
+            onClick={() => {
+              setSaveStatus('SAVING');
+              setTimeout(() => {
+                setSaveStatus('SAVED');
+                setTimeout(() => setSaveStatus('READY'), 2000);
+              }, 800);
+            }}
             className="w-full text-white font-bold py-4 rounded-full text-[11px] tracking-widest uppercase text-center shadow-md transition-all hover:opacity-90 active:scale-95 cursor-pointer"
             style={{ backgroundColor: C.forestGreen }}
           >
@@ -68,11 +154,11 @@ export default function DashboardTab({ C, content, activeSidebarTab, setActiveSi
 
           {/* Secondary links */}
           <div className="flex justify-around text-xs font-semibold uppercase tracking-wider text-gray-400 pt-2 px-2">
-            <button onClick={() => alert('Support portal loading...')} className="hover:text-black flex items-center gap-1.5">
+            <button onClick={() => setActiveTab && window.location.reload()} className="hover:text-black flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
               Support
             </button>
-            <button onClick={() => alert('Settings menu...')} className="hover:text-black flex items-center gap-1.5">
+            <button onClick={() => setActiveModal && setActiveModal('clinic')} className="hover:text-black flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               Settings
             </button>
@@ -433,7 +519,16 @@ export default function DashboardTab({ C, content, activeSidebarTab, setActiveSi
             </div>
             
             <button
-              onClick={() => alert('Review panel loaded. All changes compiled in settings db.')}
+              onClick={() => {
+                const summary = [
+                  `Content Keys: ${Object.keys(content).length}`,
+                  `Specialties: ${specialties.length}`,
+                  `Gallery Cases: ${cases.length}`,
+                  `Timeline Items: ${timeline.length}`,
+                  `Patient Resources: ${patientResources.length}`,
+                ].join('\n');
+                alert(`CMS Content Summary:\n\n${summary}\n\nAll changes are saved in real-time via the database.`);
+              }}
               className="w-full text-center font-bold py-3.5 rounded-full text-[10px] tracking-widest uppercase border border-gold-accent hover:bg-gold-accent/10 transition-all duration-300 cursor-pointer"
               style={{ borderColor: C.gold, color: C.gold }}
             >
