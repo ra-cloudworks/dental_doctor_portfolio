@@ -17,10 +17,6 @@ const C = {
 
 export default function CoreSpecialties() {
   const [specialties, setSpecialties] = useState([]);
-  const [content, setContent] = useState({
-    implant_title: 'Advanced Dental Implantology',
-    implant_desc: 'Restoration of single or multiple missing teeth with elite osseointegrated titanium implants. Focus on long-term stability and bone preservation.'
-  });
 
   useEffect(() => {
     fetch('/api/specialties')
@@ -32,10 +28,8 @@ export default function CoreSpecialties() {
 
     fetch('/api/content')
       .then(res => res.json())
-      .then(data => {
-        if (data) setContent(prev => ({ ...prev, ...data }));
-      })
-      .catch(err => console.error('Error fetching settings content:', err));
+      .then(() => {})
+      .catch(() => {});
   }, []);
 
   const implantSpecialty = specialties.find(s => s.title.toLowerCase().includes('implant')) || {

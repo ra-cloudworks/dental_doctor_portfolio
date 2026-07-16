@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ContentLibraryTab({ C, cases, content, handleImageUpload }) {
   const mediaItems = [];
 

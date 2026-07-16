@@ -1,4 +1,3 @@
-import React from 'react';
 import Hero from './components/Hero';
 import Stats from './components/Stats';
 import CoreSpecialties from './components/CoreSpecialties';

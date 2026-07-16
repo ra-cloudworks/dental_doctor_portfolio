@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { useBooking } from '../../components/BookingContext';
 import ScrollReveal from '../../components/ScrollReveal';
 import CardTilt from '../../components/CardTilt';
-import RippleButton from '../../components/RippleButton';
 import profileImg from '../../assets/profile.jpeg';
 
 const C = {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../../components/ScrollReveal';
+import SpotlightCard from '../../components/SpotlightCard';
 import BeforeAfterSlider from '../../components/BeforeAfterSlider';
 
 const C = {
@@ -74,25 +75,49 @@ export default function Gallery() {
         )}
 
         <ScrollReveal>
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <motion.div
+            className="flex flex-wrap justify-center gap-2 mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+          >
             {CATEGORIES.map(tab => (
-              <motion.button key={tab} onClick={() => setActiveTab(tab)} className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer" style={{ backgroundColor: activeTab === tab ? C.forestGreen : 'transparent', color: activeTab === tab ? '#fff' : 'rgba(4,35,30,0.6)', border: `1px solid ${activeTab === tab ? C.forestGreen : 'rgba(4,35,30,0.1)'}` }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className="px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer"
+                style={{ backgroundColor: activeTab === tab ? C.forestGreen : 'transparent', color: activeTab === tab ? '#fff' : 'rgba(4,35,30,0.6)', border: `1px solid ${activeTab === tab ? C.forestGreen : 'rgba(4,35,30,0.1)'}` }}
+                variants={{ hidden: { opacity: 0, y: 10, scale: 0.9 }, visible: { opacity: 1, y: 0, scale: 1 } }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 {tab}
               </motion.button>
             ))}
-          </div>
+          </motion.div>
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence mode="wait">
             {filteredCases.map((c, i) => (
-              <motion.div key={c.id || i} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.4, delay: i * 0.05 }} className="bg-white rounded-3xl overflow-hidden border border-black/[0.04] shadow-sm text-left flex flex-col justify-between" whileHover={{ y: -6, boxShadow: '0 20px 40px -12px rgba(4,35,30,0.1)' }}>
+              <SpotlightCard
+                key={c.id || i}
+                className="bg-white rounded-3xl overflow-hidden border border-black/[0.04] shadow-sm text-left flex flex-col justify-between"
+              >
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                >
                 <div className="p-3 pb-0">
                   {c.category === 'Dental Implants' ? (
                     <BeforeAfterSlider beforeSrc={c.beforeImage} afterSrc={c.afterImage} heightClass="aspect-[4/3] rounded-2xl" />
                   ) : (
                     <div className="relative aspect-[4/3] rounded-2xl overflow-hidden" style={{ backgroundColor: C.forestGreen }}>
-                      <img src={c.afterImage} alt={c.title} className="w-full h-full object-cover" />
+                      <img src={c.afterImage} alt={c.title} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
                       <div className="absolute top-4 right-4 text-white text-[9px] font-bold px-2.5 py-1 rounded-full tracking-widest uppercase z-20 pointer-events-none" style={{ backgroundColor: 'rgba(184,150,108,0.9)' }}>{c.category}</div>
                     </div>
                   )}
@@ -112,7 +137,8 @@ export default function Gallery() {
                     <div className="flex justify-between"><span className="text-gray-400 font-medium">Primary Material:</span><span className="font-semibold text-right max-w-[180px] truncate">{c.material}</span></div>
                   </div>
                 </div>
-              </motion.div>
+                </motion.div>
+              </SpotlightCard>
             ))}
           </AnimatePresence>
         </div>

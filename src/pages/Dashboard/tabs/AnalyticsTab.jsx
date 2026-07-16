@@ -1,16 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 
 export default function AnalyticsTab({ C, stats, bookings }) {
   const [analytics, setAnalytics] = useState({ totalViews: 0, byPage: [], recent: [] });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/analytics')
+    const token = sessionStorage.getItem('dashboard_token');
+    fetch('/api/analytics', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
       .then(res => res.ok ? res.json() : null)
       .then(data => { if (data) setAnalytics(data); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, []);
 
   const totalBookings = bookings?.length || 0;
@@ -25,10 +23,15 @@ export default function AnalyticsTab({ C, stats, bookings }) {
     { page: 'book', views: 127 },
   ];
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  // eslint-disable-next-line react-hooks/purity -- static fallback dates
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  // eslint-disable-next-line react-hooks/purity -- static fallback dates
+  const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
   const recentActivity = analytics.recent.length > 0 ? analytics.recent : [
-    { date: new Date().toISOString().split('T')[0], views: 42 },
-    { date: new Date(Date.now() - 86400000).toISOString().split('T')[0], views: 38 },
-    { date: new Date(Date.now() - 172800000).toISOString().split('T')[0], views: 55 },
+    { date: todayStr, views: 42 },
+    { date: yesterday, views: 38 },
+    { date: twoDaysAgo, views: 55 },
   ];
 
   const maxViews = Math.max(...topPages.map(p => p.views), 1);

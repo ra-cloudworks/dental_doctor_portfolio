@@ -66,7 +66,7 @@ export default function Booking() {
       if (!res.ok) throw new Error('Submission failed');
       setSubmitSuccess(true);
       setFormData({ firstName: '', lastName: '', email: '', phone: '', preferredDate: '', specialty: 'implantology', message: '' });
-    } catch (err) {
+    } catch {
       alert('Failed to submit your request. Please try again or call us directly.');
     } finally {
       setIsSubmitting(false);

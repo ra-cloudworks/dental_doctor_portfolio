@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardTab from './tabs/DashboardTab';
@@ -84,22 +84,6 @@ export default function Dashboard() {
     hero_badge_desc: '',
   });
 
-  const [implantForm, setImplantForm] = useState({
-    implant_title: '',
-    implant_subtitle: '',
-    implant_desc: '',
-    implant_proc1_title: '',
-    implant_proc1_desc: '',
-    implant_proc2_title: '',
-    implant_proc2_desc: '',
-    tech_item1_title: '',
-    tech_item1_desc: '',
-    tech_item2_title: '',
-    tech_item2_desc: '',
-    tech_item3_title: '',
-    tech_item3_desc: '',
-  });
-
   const [aboutForm, setAboutForm] = useState({
     commit_title: '',
     commit_desc: '',
@@ -152,6 +136,7 @@ export default function Dashboard() {
   // Sync modalSection when activeModal changes
   useEffect(() => {
     if (activeModal) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync sidebar section with modal
       setModalSection(activeModal);
     }
   }, [activeModal]);
@@ -167,7 +152,7 @@ export default function Dashboard() {
         fetch('/api/timeline').then(res => res.json()),
         fetch('/api/stats').then(res => res.json()),
         fetch('/api/patient-resources').then(res => res.json()),
-        fetch('/api/bookings').then(res => res.ok ? res.json() : []).catch(() => []),
+        authFetch('/api/bookings').then(res => res.ok ? res.json() : []).catch(() => []),
       ]);
 
       setContent(resContent);
@@ -188,22 +173,6 @@ export default function Dashboard() {
         hero_profile_img: resContent.hero_profile_img || '',
         hero_badge_title: resContent.hero_badge_title || '',
         hero_badge_desc: resContent.hero_badge_desc || '',
-      });
-
-      setImplantForm({
-        implant_title: resContent.implant_title || '',
-        implant_subtitle: resContent.implant_subtitle || '',
-        implant_desc: resContent.implant_desc || '',
-        implant_proc1_title: resContent.implant_proc1_title || '',
-        implant_proc1_desc: resContent.implant_proc1_desc || '',
-        implant_proc2_title: resContent.implant_proc2_title || '',
-        implant_proc2_desc: resContent.implant_proc2_desc || '',
-        tech_item1_title: resContent.tech_item1_title || '',
-        tech_item1_desc: resContent.tech_item1_desc || '',
-        tech_item2_title: resContent.tech_item2_title || '',
-        tech_item2_desc: resContent.tech_item2_desc || '',
-        tech_item3_title: resContent.tech_item3_title || '',
-        tech_item3_desc: resContent.tech_item3_desc || '',
       });
 
       setAboutForm({
@@ -246,8 +215,28 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetching on auth
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
+
+  // Attaches the dashboard session token and logs the user out if it's rejected
+  const authFetch = async (url, options = {}) => {
+    const token = sessionStorage.getItem('dashboard_token');
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (res.status === 401) {
+      sessionStorage.removeItem('dashboard_auth');
+      sessionStorage.removeItem('dashboard_token');
+      setIsAuthenticated(false);
+    }
+    return res;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -260,9 +249,11 @@ export default function Dashboard() {
         body: JSON.stringify({ password: loginPassword }),
       });
       if (!res.ok) throw new Error('Invalid password');
+      const data = await res.json();
       sessionStorage.setItem('dashboard_auth', 'true');
+      sessionStorage.setItem('dashboard_token', data.token);
       setIsAuthenticated(true);
-    } catch (err) {
+    } catch {
       setLoginError('Invalid password. Please try again.');
     } finally {
       setLoginLoading(false);
@@ -271,6 +262,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('dashboard_auth');
+    sessionStorage.removeItem('dashboard_token');
     setIsAuthenticated(false);
     setLoginPassword('');
   };
@@ -285,7 +277,7 @@ export default function Dashboard() {
 
     try {
       setSaveStatus('SAVING');
-      const response = await fetch('/api/upload', {
+      const response = await authFetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
@@ -307,7 +299,7 @@ export default function Dashboard() {
   const saveSettings = async (settingsData) => {
     try {
       setSaveStatus('SAVING');
-      const res = await fetch('/api/content', {
+      const res = await authFetch('/api/content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settingsData),
@@ -328,7 +320,7 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       setSaveStatus('SAVING');
-      const res = await fetch('/api/specialties', {
+      const res = await authFetch('/api/specialties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(specialtyForm),
@@ -348,7 +340,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this service specialty?')) return;
     try {
       setSaveStatus('SAVING');
-      const res = await fetch(`/api/specialties/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/specialties/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete specialty failed');
       await fetchData();
       setSaveStatus('SAVED');
@@ -364,7 +356,7 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       setSaveStatus('SAVING');
-      const res = await fetch('/api/cases', {
+      const res = await authFetch('/api/cases', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(caseForm),
@@ -384,7 +376,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this clinical case?')) return;
     try {
       setSaveStatus('SAVING');
-      const res = await fetch(`/api/cases/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/cases/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete case failed');
       await fetchData();
       setSaveStatus('SAVED');
@@ -400,7 +392,7 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       setSaveStatus('SAVING');
-      const res = await fetch('/api/timeline', {
+      const res = await authFetch('/api/timeline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(timelineForm),
@@ -420,7 +412,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this timeline credential?')) return;
     try {
       setSaveStatus('SAVING');
-      const res = await fetch(`/api/timeline/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/timeline/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete timeline item failed');
       await fetchData();
       setSaveStatus('SAVED');
@@ -437,7 +429,7 @@ export default function Dashboard() {
     try {
       setSaveStatus('SAVING');
       for (const stat of statsForm) {
-        await fetch('/api/stats', {
+        await authFetch('/api/stats', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(stat),
@@ -458,7 +450,7 @@ export default function Dashboard() {
     e.preventDefault();
     try {
       setSaveStatus('SAVING');
-      const res = await fetch('/api/patient-resources', {
+      const res = await authFetch('/api/patient-resources', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patientResourceForm),
@@ -479,7 +471,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to delete this patient resource?')) return;
     try {
       setSaveStatus('SAVING');
-      const res = await fetch(`/api/patient-resources/${id}`, { method: 'DELETE' });
+      const res = await authFetch(`/api/patient-resources/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete patient resource failed');
       await fetchData();
       setSaveStatus('SAVED');
@@ -655,7 +647,12 @@ export default function Dashboard() {
             setActiveModal={setActiveModal}
             setSelectedItem={setSelectedItem}
             saveStatus={saveStatus}
+            setSaveStatus={setSaveStatus}
+            setActiveTab={setActiveTab}
             setHeroForm={setHeroForm}
+            setAwardForm={setAwardForm}
+            setClinicForm={setClinicForm}
+            setFooterBioForm={setFooterBioForm}
             cases={cases}
             timeline={timeline}
             patientResources={patientResources}

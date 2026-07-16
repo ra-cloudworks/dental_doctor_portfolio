@@ -2,7 +2,7 @@
  * GlobalBackground.jsx — Enhanced with mouse-reactive orbs, film grain,
  * diagonal light rays, animated mesh gradient, shimmer, waves, teeth, particles.
  */
-import { useEffect, useRef, useState, memo, useCallback } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { motion, useAnimationControls } from 'framer-motion';
 
 const TOOTH_PATH =
@@ -233,7 +233,8 @@ function GlobalBackground() {
       <svg className="absolute w-full h-full" viewBox="0 0 1440 800" fill="none"
         preserveAspectRatio="xMidYMid slice" style={{ opacity: 0.65 }}>
         {WAVES.map(w => (
-          <motion.path key={w.id} stroke={w.stroke} strokeWidth={w.width} d={w.a}
+          <motion.path key={w.id} stroke={w.stroke} strokeWidth={w.width}
+            initial={{ d: w.a }}
             animate={{ d: [w.a, w.b, w.a] }}
             transition={{ duration: w.dur, delay: w.delay, repeat: Infinity, ease: 'easeInOut' }} />
         ))}

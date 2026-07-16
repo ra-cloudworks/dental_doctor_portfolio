@@ -5,12 +5,10 @@ const TRAIL_INTERVAL = 40;
 
 export default function CursorTrail() {
   const [trails, setTrails] = useState([]);
-  const [mouse, setMouse] = useState({ x: -100, y: -100 });
   const [visible, setVisible] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const idCounter = useRef(0);
   const lastTrailTime = useRef(0);
-  const rafRef = useRef(null);
   const mouseRef = useRef({ x: -100, y: -100 });
 
   const handleMouseMove = useCallback((e) => {
@@ -55,7 +53,6 @@ export default function CursorTrail() {
       document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
       document.documentElement.removeEventListener('mouseenter', handleMouseEnter);
       clearInterval(cleanupInterval);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [handleMouseMove]);
 
@@ -66,6 +63,7 @@ export default function CursorTrail() {
   return (
     <div className="pointer-events-none fixed inset-0 z-[9999]" aria-hidden="true">
       {/* Main cursor dot */}
+      {/* eslint-disable react-hooks/refs -- imperative ref for 60fps cursor tracking */}
       {visible && (
         <div
           className="cursor-glow"
@@ -78,8 +76,10 @@ export default function CursorTrail() {
           }}
         />
       )}
+      {/* eslint-enable react-hooks/refs */}
       {/* Trail particles */}
-      {trails.map((trail, i) => {
+      {trails.map((trail) => {
+        // eslint-disable-next-line react-hooks/purity -- intentional: trail age computed at render time for smooth animation
         const age = (Date.now() - trail.time) / (TRAIL_LENGTH * TRAIL_INTERVAL);
         const opacity = (1 - age) * 0.3;
         const size = (1 - age) * (isHovering ? 16 : 10);

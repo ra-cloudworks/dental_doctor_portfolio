@@ -1,6 +1,22 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-export default function SiteSettingsTab({ C, content, setContent, saveSettings, setSaveStatus }) {
+function SaveBtn({ status, onClick, C }) {
+  return (
+    <div className="flex items-center gap-3 pt-2">
+      <button
+        onClick={onClick}
+        disabled={status === 'SAVING'}
+        className="px-5 py-2 bg-[#04231E] text-white text-[10px] font-bold uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {status === 'SAVING' ? 'Saving...' : status === 'SAVED' ? 'Saved!' : 'Save'}
+      </button>
+      {status === 'SAVED' && <span className="text-xs font-semibold" style={{ color: C.forestGreen }}>Changes saved</span>}
+      {status === 'ERROR' && <span className="text-xs font-semibold text-red-500">Failed to save</span>}
+    </div>
+  );
+}
+
+export default function SiteSettingsTab({ C, content, saveSettings, setSaveStatus }) {
   const [clinicForm, setClinicForm] = useState({
     clinic_phone: content.clinic_phone || '',
     clinic_email: content.clinic_email || '',
@@ -53,20 +69,6 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
   const inputCls = 'w-full px-4 py-2.5 text-sm font-medium rounded-xl border border-black/[0.08] bg-[#FAF6F0] focus:outline-none focus:ring-2 focus:ring-[#04231E]/20 transition-all';
   const labelCls = 'block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-widest';
 
-  const SaveBtn = ({ status, onClick }) => (
-    <div className="flex items-center gap-3 pt-2">
-      <button
-        onClick={onClick}
-        disabled={status === 'SAVING'}
-        className="px-5 py-2 bg-[#04231E] text-white text-[10px] font-bold uppercase tracking-widest rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
-      >
-        {status === 'SAVING' ? 'Saving...' : status === 'SAVED' ? 'Saved!' : 'Save'}
-      </button>
-      {status === 'SAVED' && <span className="text-xs font-semibold" style={{ color: C.forestGreen }}>Changes saved</span>}
-      {status === 'ERROR' && <span className="text-xs font-semibold text-red-500">Failed to save</span>}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div>
@@ -93,7 +95,7 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
               <input className={inputCls} value={clinicForm.clinic_location} onChange={(e) => setClinicForm({ ...clinicForm, clinic_location: e.target.value })} placeholder="City, State" />
             </div>
           </div>
-          <SaveBtn status={saveMsg.clinic} onClick={() => handleSave('clinic', clinicForm)} />
+          <SaveBtn status={saveMsg.clinic} onClick={() => handleSave('clinic', clinicForm)} C={C} />
         </div>
 
         {/* Awards */}
@@ -109,7 +111,7 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
               <textarea rows={3} className={inputCls + ' resize-none'} value={awardForm.primary_award_desc} onChange={(e) => setAwardForm({ ...awardForm, primary_award_desc: e.target.value })} placeholder="Brief description" />
             </div>
           </div>
-          <SaveBtn status={saveMsg.award} onClick={() => handleSave('award', awardForm)} />
+          <SaveBtn status={saveMsg.award} onClick={() => handleSave('award', awardForm)} C={C} />
         </div>
 
         {/* About & Commitment */}
@@ -143,7 +145,7 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
               </div>
             </div>
           </div>
-          <SaveBtn status={saveMsg.about} onClick={() => handleSave('about', aboutForm)} />
+          <SaveBtn status={saveMsg.about} onClick={() => handleSave('about', aboutForm)} C={C} />
         </div>
 
         {/* Footer Bio */}
@@ -155,7 +157,7 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
               <textarea rows={4} className={inputCls + ' resize-none'} value={footerForm.footer_bio_summary} onChange={(e) => setFooterForm({ ...footerForm, footer_bio_summary: e.target.value })} placeholder="Short bio shown in footer" />
             </div>
           </div>
-          <SaveBtn status={saveMsg.footer} onClick={() => handleSave('footer', footerForm)} />
+          <SaveBtn status={saveMsg.footer} onClick={() => handleSave('footer', footerForm)} C={C} />
         </div>
 
         {/* Success Stories */}
@@ -177,7 +179,7 @@ export default function SiteSettingsTab({ C, content, setContent, saveSettings, 
               </div>
             </div>
           </div>
-          <SaveBtn status={saveMsg.story} onClick={() => handleSave('story', storyForm)} />
+          <SaveBtn status={saveMsg.story} onClick={() => handleSave('story', storyForm)} C={C} />
         </div>
 
       </div>

@@ -3,7 +3,6 @@ import { useRef, useState, useCallback } from 'react';
 export default function CardTilt({ children, className = '', maxTilt = 12, scale = 1.03, shine = true }) {
   const ref = useRef(null);
   const [style, setStyle] = useState({});
-  const [isHovering, setIsHovering] = useState(false);
 
   const handleMouseMove = useCallback((e) => {
     const card = ref.current;
@@ -36,11 +35,6 @@ export default function CardTilt({ children, className = '', maxTilt = 12, scale
       transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
       transition: 'transform 0.5s ease-out',
     });
-    setIsHovering(false);
-  }, []);
-
-  const handleMouseEnter = useCallback(() => {
-    setIsHovering(true);
   }, []);
 
   return (
@@ -50,7 +44,6 @@ export default function CardTilt({ children, className = '', maxTilt = 12, scale
       style={style}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
     >
       {children}
     </div>

@@ -1,42 +1,50 @@
 import { useRef, useEffect, useState } from 'react';
 import { useInView } from 'framer-motion';
 
-export default function AnimatedCounter({ target, suffix = '', duration = 2000 }) {
+export default function AnimatedCounter({
+  target,
+  suffix = '',
+  prefix = '',
+  duration = 2,
+  className = '',
+  style = {},
+  decimals = 0,
+}) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-40px' });
-  const [count, setCount] = useState('0');
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     if (!isInView) return;
 
-    const numericTarget = parseFloat(target.replace(/[^0-9.]/g, ''));
-    if (isNaN(numericTarget)) {
-      setCount(target);
-      return;
-    }
+    const numTarget = parseFloat(target.toString().replace(/[^0-9.]/g, ''));
+    if (isNaN(numTarget)) return;
 
     const startTime = performance.now();
+    const dur = duration * 1000;
+
     const animate = (currentTime) => {
       const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.floor(eased * numericTarget);
-
-      if (target.includes('.')) {
-        setCount((current + (eased * numericTarget - current)).toFixed(1));
-      } else {
-        setCount(String(current));
-      }
+      const progress = Math.min(elapsed / dur, 1);
+      // easeOutExpo
+      const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(eased * numTarget);
 
       if (progress < 1) {
         requestAnimationFrame(animate);
-      } else {
-        setCount(target.replace(/[0-9.]/g, '').length > 0 || target.match(/[0-9]+/) ? target : String(numericTarget));
       }
     };
 
     requestAnimationFrame(animate);
   }, [isInView, target, duration]);
 
-  return <span ref={ref}>{count}{suffix || target.replace(/[0-9.]/g, '')}</span>;
+  const displayValue = decimals > 0
+    ? count.toFixed(decimals)
+    : Math.round(count).toString();
+
+  return (
+    <span ref={ref} className={className} style={style}>
+      {prefix}{displayValue}{suffix}
+    </span>
+  );
 }

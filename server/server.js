@@ -3,14 +3,73 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { query } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load .env (KEY=VALUE per line) without requiring a dependency
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  for (const line of fs.readFileSync(filePath, 'utf-8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = trimmed.indexOf('=');
+    if (idx === -1) continue;
+    const key = trimmed.slice(0, idx).trim();
+    const value = trimmed.slice(idx + 1).trim();
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
+loadEnvFile(path.resolve(__dirname, '../.env'));
+
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD;
+const SESSION_SECRET = process.env.SESSION_SECRET;
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+if (!DASHBOARD_PASSWORD || !SESSION_SECRET) {
+  console.warn('WARNING: DASHBOARD_PASSWORD and SESSION_SECRET are not set. Set them in a .env file — dashboard login will be disabled until then.');
+}
+
+function signToken() {
+  const payload = `admin:${Date.now()}`;
+  const signature = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}.${signature}`).toString('base64');
+}
+
+function verifyToken(token) {
+  if (!token || !SESSION_SECRET) return false;
+  let decoded;
+  try {
+    decoded = Buffer.from(token, 'base64').toString('utf-8');
+  } catch {
+    return false;
+  }
+  const dotIdx = decoded.lastIndexOf('.');
+  if (dotIdx === -1) return false;
+  const payload = decoded.slice(0, dotIdx);
+  const signature = decoded.slice(dotIdx + 1);
+  const expectedSignature = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  const sigBuf = Buffer.from(signature, 'hex');
+  const expBuf = Buffer.from(expectedSignature, 'hex');
+  if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) return false;
+  const ts = Number(payload.split(':')[1]);
+  return Number.isFinite(ts) && Date.now() - ts <= SESSION_DURATION_MS;
+}
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!verifyToken(token)) {
+    return res.status(401).json({ error: 'Unauthorized. Please log in again.' });
+  }
+  next();
+}
 
 // Enable CORS and JSON parsing
 app.use(cors());
@@ -55,7 +114,7 @@ app.use('/uploads', express.static(uploadsDir));
 // ── API ROUTES ──
 
 // 1. Image Upload Endpoint
-app.post('/api/upload', upload.single('image'), (req, res) => {
+app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No image uploaded' });
@@ -82,7 +141,7 @@ app.get('/api/content', async (req, res) => {
   }
 });
 
-app.post('/api/content', async (req, res) => {
+app.post('/api/content', requireAuth, async (req, res) => {
   try {
     const updates = req.body;
     for (const [key, value] of Object.entries(updates)) {
@@ -104,7 +163,7 @@ app.get('/api/specialties', async (req, res) => {
   }
 });
 
-app.post('/api/specialties', async (req, res) => {
+app.post('/api/specialties', requireAuth, async (req, res) => {
   try {
     const { id, title, desc, icon, link } = req.body;
     if (id) {
@@ -125,7 +184,7 @@ app.post('/api/specialties', async (req, res) => {
   }
 });
 
-app.delete('/api/specialties/:id', async (req, res) => {
+app.delete('/api/specialties/:id', requireAuth, async (req, res) => {
   try {
     await query.run('DELETE FROM specialties WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Specialty deleted' });
@@ -144,7 +203,7 @@ app.get('/api/cases', async (req, res) => {
   }
 });
 
-app.post('/api/cases', async (req, res) => {
+app.post('/api/cases', requireAuth, async (req, res) => {
   try {
     const { id, case_id, category, title, desc, beforeImage, afterImage, prosthetics, duration, material, featured } = req.body;
     const isFeatured = featured ? 1 : 0;
@@ -178,7 +237,7 @@ app.post('/api/cases', async (req, res) => {
   }
 });
 
-app.delete('/api/cases/:id', async (req, res) => {
+app.delete('/api/cases/:id', requireAuth, async (req, res) => {
   try {
     await query.run('DELETE FROM gallery_cases WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Case deleted' });
@@ -197,7 +256,7 @@ app.get('/api/timeline', async (req, res) => {
   }
 });
 
-app.post('/api/timeline', async (req, res) => {
+app.post('/api/timeline', requireAuth, async (req, res) => {
   try {
     const { id, tag, title, institution, details } = req.body;
     if (id) {
@@ -218,7 +277,7 @@ app.post('/api/timeline', async (req, res) => {
   }
 });
 
-app.delete('/api/timeline/:id', async (req, res) => {
+app.delete('/api/timeline/:id', requireAuth, async (req, res) => {
   try {
     await query.run('DELETE FROM timeline_items WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Timeline item deleted' });
@@ -237,7 +296,7 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
-app.post('/api/stats', async (req, res) => {
+app.post('/api/stats', requireAuth, async (req, res) => {
   try {
     const { id, value, label } = req.body;
     await query.run('UPDATE stats SET value = ?, label = ? WHERE id = ?', [value, label, id]);
@@ -257,7 +316,7 @@ app.get('/api/patient-resources', async (req, res) => {
   }
 });
 
-app.post('/api/patient-resources', async (req, res) => {
+app.post('/api/patient-resources', requireAuth, async (req, res) => {
   try {
     const { id, title, category, description, icon, link, sort_order } = req.body;
     if (id) {
@@ -278,7 +337,7 @@ app.post('/api/patient-resources', async (req, res) => {
   }
 });
 
-app.delete('/api/patient-resources/:id', async (req, res) => {
+app.delete('/api/patient-resources/:id', requireAuth, async (req, res) => {
   try {
     await query.run('DELETE FROM patient_resources WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Patient resource deleted' });
@@ -304,7 +363,7 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
-app.get('/api/bookings', async (req, res) => {
+app.get('/api/bookings', requireAuth, async (req, res) => {
   try {
     const rows = await query.all('SELECT * FROM bookings ORDER BY createdAt DESC');
     res.json(rows);
@@ -313,7 +372,7 @@ app.get('/api/bookings', async (req, res) => {
   }
 });
 
-app.post('/api/bookings/:id/status', async (req, res) => {
+app.post('/api/bookings/:id/status', requireAuth, async (req, res) => {
   try {
     const { status } = req.body;
     await query.run('UPDATE bookings SET status = ? WHERE id = ?', [status, req.params.id]);
@@ -324,7 +383,7 @@ app.post('/api/bookings/:id/status', async (req, res) => {
 });
 
 // 9. Analytics Endpoints
-app.get('/api/analytics', async (req, res) => {
+app.get('/api/analytics', requireAuth, async (req, res) => {
   try {
     const totalViews = await query.all('SELECT SUM(views) as total FROM analytics');
     const byPage = await query.all('SELECT page, SUM(views) as views FROM analytics GROUP BY page ORDER BY views DESC');
@@ -358,10 +417,12 @@ app.post('/api/analytics/track', async (req, res) => {
 // Dashboard auth check
 app.post('/api/auth/dashboard', async (req, res) => {
   try {
+    if (!DASHBOARD_PASSWORD || !SESSION_SECRET) {
+      return res.status(500).json({ error: 'Dashboard authentication is not configured on the server.' });
+    }
     const { password } = req.body;
-    const adminPassword = process.env.DASHBOARD_PASSWORD || 'admin123';
-    if (password === adminPassword) {
-      res.json({ success: true, token: Buffer.from(`admin:${Date.now()}`).toString('base64') });
+    if (password === DASHBOARD_PASSWORD) {
+      res.json({ success: true, token: signToken() });
     } else {
       res.status(401).json({ error: 'Invalid credentials.' });
     }

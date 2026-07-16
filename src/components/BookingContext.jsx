@@ -3,6 +3,7 @@ import BookingPopup from './BookingPopup';
 
 const BookingContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useBooking() {
   return useContext(BookingContext);
 }

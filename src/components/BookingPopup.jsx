@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBooking } from './BookingContext';
+import ConfettiBurst from './ConfettiBurst';
 
 const C = {
   forestGreen: 'var(--color-forest-green)',
@@ -63,6 +64,7 @@ export default function BookingPopup() {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset form state on modal open
       setStep(0);
       setSubmitSuccess(false);
       setErrors({});
@@ -171,11 +173,13 @@ export default function BookingPopup() {
                   /* ── SUCCESS STATE ────────────────────────── */
                   <motion.div
                     key="success"
-                    className="text-center py-8 space-y-6"
+                    className="text-center py-8 space-y-6 relative"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 18 }}
                   >
+                    {/* Confetti burst */}
+                    <ConfettiBurst count={30} />
                     {/* Animated check circle */}
                     <motion.div
                       className="w-20 h-20 rounded-full mx-auto flex items-center justify-center text-white"

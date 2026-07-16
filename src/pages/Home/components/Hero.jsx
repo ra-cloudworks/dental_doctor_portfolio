@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBooking } from '../../../components/BookingContext';
+import TextCharReveal from '../../../components/TextCharReveal';
+import AnimatedCounter from '../../../components/AnimatedCounter';
+import MagneticButton from '../../../components/MagneticButton';
 import profileImgFallback from '../../../assets/d_image.png';
 import heroBg from '../../../assets/screen.png';
 
@@ -322,15 +325,23 @@ export default function HeroPage() {
               >
                 {content.hero_title_left}
               </motion.h1>
-              <motion.h1
-                className="text-4xl sm:text-5xl lg:text-[58px] font-normal leading-tight tracking-wide block italic"
-                style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-gold-accent)' }}
-                variants={lineAnim(1.82)}
-                initial="hidden"
-                animate={ready ? 'show' : 'hidden'}
+              <motion.div
+                className="overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={ready ? { opacity: 1 } : { opacity: 0 }}
+                transition={{ delay: 1.82, duration: 0.1 }}
               >
-                {content.hero_title_gold}
-              </motion.h1>
+                <TextCharReveal
+                  text={content.hero_title_gold}
+                  tag="h1"
+                  className="text-4xl sm:text-5xl lg:text-[58px] font-normal leading-tight tracking-wide block italic"
+                  style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-gold-accent)' }}
+                  delay={1.82}
+                  staggerDelay={0.04}
+                  springStiffness={150}
+                  springDamping={10}
+                />
+              </motion.div>
               <motion.h1
                 className="text-4xl sm:text-5xl lg:text-[58px] font-normal leading-tight tracking-wide block"
                 style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-forest-green)' }}
@@ -360,27 +371,31 @@ export default function HeroPage() {
               animate={ready ? 'show' : 'hidden'}
             >
               {/* Primary */}
-              <div className="relative inline-flex">
-                <span className="absolute inset-0 rounded-full animate-soft-ping" style={{ background: 'rgba(4,35,30,0.08)' }} />
-                <motion.button
-                  onClick={openBooking}
-                  className="relative font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
-                  style={{ backgroundColor: 'var(--color-forest-green)' }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  BOOK A CONSULTATION
-                </motion.button>
-              </div>
+              <MagneticButton strength={0.15}>
+                <div className="relative inline-flex">
+                  <span className="absolute inset-0 rounded-full animate-soft-ping" style={{ background: 'rgba(4,35,30,0.08)' }} />
+                  <motion.button
+                    onClick={openBooking}
+                    className="relative font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase text-white text-center cursor-pointer"
+                    style={{ backgroundColor: 'var(--color-forest-green)' }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    BOOK A CONSULTATION
+                  </motion.button>
+                </div>
+              </MagneticButton>
 
               {/* Secondary */}
-              <Link
-                to="/gallery"
-                className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent text-center group"
-                style={{ border: '1px solid var(--color-gold-accent)', color: 'var(--color-gold-accent)' }}
-              >
-                <span className="group-hover:opacity-70 transition-opacity duration-300">VIEW SUCCESS STORIES</span>
-              </Link>
+              <MagneticButton strength={0.15}>
+                <Link
+                  to="/gallery"
+                  className="font-bold py-3.5 px-8 rounded-full transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 text-[11px] tracking-widest uppercase bg-transparent text-center group inline-flex"
+                  style={{ border: '1px solid var(--color-gold-accent)', color: 'var(--color-gold-accent)' }}
+                >
+                  <span className="group-hover:opacity-70 transition-opacity duration-300">VIEW SUCCESS STORIES</span>
+                </Link>
+              </MagneticButton>
             </motion.div>
 
             {/* MINI STATS ROW */}
@@ -390,19 +405,26 @@ export default function HeroPage() {
               initial="hidden"
               animate={ready ? 'show' : 'hidden'}
             >
-              {heroStats.map((s, i) => (
-                <motion.div key={i} variants={statAnim(i)} className="text-left">
-                  <div
-                    className="text-2xl font-bold tracking-tight"
-                    style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-gold-accent)' }}
-                  >
-                    {s.value}
-                  </div>
-                  <div className="text-[10px] font-bold tracking-widest uppercase mt-0.5" style={{ color: 'rgba(4,35,30,0.45)' }}>
-                    {s.label}
-                  </div>
-                </motion.div>
-              ))}
+              {heroStats.map((s, i) => {
+                const numericMatch = s.value.match(/^([\d.]+)/);
+                const numValue = numericMatch ? parseFloat(numericMatch[1]) : null;
+                const suffix = numValue !== null ? s.value.replace(numericMatch[0], '') : '';
+                return (
+                  <motion.div key={i} variants={statAnim(i)} className="text-left">
+                    <div
+                      className="text-2xl font-bold tracking-tight"
+                      style={{ fontFamily: 'var(--font-serif-elegant)', color: 'var(--color-gold-accent)' }}
+                    >
+                      {numValue !== null && ready ? (
+                        <AnimatedCounter target={numValue} suffix={suffix} duration={2} />
+                      ) : s.value}
+                    </div>
+                    <div className="text-[10px] font-bold tracking-widest uppercase mt-0.5" style={{ color: 'rgba(4,35,30,0.45)' }}>
+                      {s.label}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </motion.div>
 
           </div>

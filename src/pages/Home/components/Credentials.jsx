@@ -75,21 +75,31 @@ export default function CredentialsSection() {
               {timelineItems.map((item, i) => (
                 <ScrollReveal key={i} delay={i * 0.15} direction="left" x={40}>
                   <div className="relative text-left">
-                    {/* Dot — vertically centered on the tag line */}
-                    <motion.div
-                      className="absolute rounded-full shadow-sm"
+                    {/* Dot with glow pulse */}
+                    <div
+                      className="absolute"
                       style={{
                         left: LINE_LEFT + 1.5 / 2 - DOT_SIZE / 2,
                         top: 2,
                         width: DOT_SIZE,
                         height: DOT_SIZE,
-                        backgroundColor: C.gold,
-                        border: `3px solid ${C.creamBg}`,
                       }}
-                      whileInView={{ scale: [0, 1.3, 1] }}
-                      transition={{ delay: i * 0.15 + 0.3, duration: 0.5 }}
-                      viewport={{ once: true }}
-                    />
+                    >
+                      {/* Glow ring */}
+                      <motion.div
+                        className="absolute inset-[-6px] rounded-full"
+                        style={{ backgroundColor: 'rgba(184,150,108,0.2)' }}
+                        animate={{ scale: [1, 1.6, 1], opacity: [0.3, 0, 0.3] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+                      />
+                      <motion.div
+                        className="absolute inset-0 rounded-full shadow-sm"
+                        style={{ backgroundColor: C.gold, border: `3px solid ${C.creamBg}` }}
+                        whileInView={{ scale: [0, 1.3, 1] }}
+                        transition={{ delay: i * 0.15 + 0.3, duration: 0.5, type: 'spring' }}
+                        viewport={{ once: true }}
+                      />
+                    </div>
 
                     <div className="space-y-1.5">
                       <div className="text-[10px] font-bold tracking-widest uppercase" style={{ color: C.gold }}>{item.tag}</div>

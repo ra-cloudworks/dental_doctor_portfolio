@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 
 export default function ScrollReveal({
@@ -15,7 +15,6 @@ export default function ScrollReveal({
   style = {},
   parallax = 0,
   blur = false,
-  stagger = 0,
   ...props
 }) {
   const ref = useRef(null);

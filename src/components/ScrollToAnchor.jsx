@@ -9,7 +9,7 @@ export default function ScrollToAnchor() {
     if (!hash) {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [pathname]);
+  }, [pathname, hash]);
 
   // Scroll to anchor element when a hash is present
   // Retries up to 10 times in case the page hasn't rendered the element yet

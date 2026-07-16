@@ -1,7 +1,6 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function DashboardTab({ C, content, activeSidebarTab, setActiveSidebarTab, setActiveModal, setSelectedItem, saveStatus, setHeroForm, cases, timeline, patientResources, setPatientResourceForm, setAboutForm, setCaseForm, setSpecialtyForm, featuredCase, searchQuery, specialties }) {
+export default function DashboardTab({ C, content, activeSidebarTab, setActiveSidebarTab, setActiveModal, setSelectedItem, saveStatus, setSaveStatus, setActiveTab, setHeroForm, setAwardForm, setClinicForm, setFooterBioForm, cases, timeline, patientResources, setPatientResourceForm, setAboutForm, setCaseForm, setSpecialtyForm, featuredCase, searchQuery, specialties }) {
   
   const searchLower = (searchQuery || '').toLowerCase();
   const matchedSpecialties = searchLower ? specialties.filter(s => s.title.toLowerCase().includes(searchLower) || s.desc.toLowerCase().includes(searchLower)) : [];
