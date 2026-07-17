@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardTab from './tabs/DashboardTab';
@@ -13,6 +13,14 @@ const C = {
   gold:        'var(--color-gold-accent)',
   serif:       'var(--font-serif-elegant)',
   sans:        'var(--font-sans-premium)',
+};
+
+const SPECIALTY_LABELS = {
+  implantology: 'Dental Implantology',
+  rehabilitation: 'Full-Mouth Rehabilitation',
+  cosmetic: 'Cosmetic Dentistry',
+  prosthodontics: 'General Prosthodontics',
+  other: 'Second Opinion / Other',
 };
 
 const MODAL_SECTIONS = [
@@ -54,7 +62,10 @@ export default function Dashboard() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [bookings, setBookings] = useState([]);
-  
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [updatingBookingId, setUpdatingBookingId] = useState(null);
+  const notificationsRef = useRef(null);
+
   // Data states
   const [content, setContent] = useState({});
   const [specialties, setSpecialties] = useState([]);
@@ -220,6 +231,18 @@ export default function Dashboard() {
     fetchData();
   }, [isAuthenticated]);
 
+  // Close the notifications panel when clicking outside of it
+  useEffect(() => {
+    if (!showNotifications) return;
+    const handleClickOutside = (e) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
+
   // Attaches the dashboard session token and logs the user out if it's rejected
   const authFetch = async (url, options = {}) => {
     const token = sessionStorage.getItem('dashboard_token');
@@ -236,6 +259,24 @@ export default function Dashboard() {
       setIsAuthenticated(false);
     }
     return res;
+  };
+
+  const updateBookingStatus = async (id, status) => {
+    try {
+      setUpdatingBookingId(id);
+      const res = await authFetch(`/api/bookings/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error('Failed to update booking status');
+      setBookings(prev => prev.map(b => (b.id === id ? { ...b, status } : b)));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update the consultation request. Please try again.');
+    } finally {
+      setUpdatingBookingId(null);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -535,12 +576,13 @@ export default function Dashboard() {
 
   // Get featured case for rendering mock in card
   const featuredCase = cases.find(c => c.featured === 1) || cases[0] || {};
+  const pendingBookings = bookings.filter(b => b.status === 'pending');
 
   return (
     <div className="bg-[#FAF6F0] min-h-screen flex flex-col justify-between" style={{ fontFamily: C.sans, color: C.forestGreen }}>
       
       {/* ── HEADER ── */}
-      <header className="bg-white border-b border-black/[0.06] sticky top-0 z-40">
+      <header className="bg-white border-b border-black/[0.06] sticky top-0 z-40" style={{ zIndex: 40 }}>
         <div className="max-w-8xl mx-auto px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-8">
             <Link to="/" className="text-xl font-normal tracking-wide transition-opacity hover:opacity-80" style={{ fontFamily: C.serif, color: C.forestGreen }}>
@@ -587,23 +629,94 @@ export default function Dashboard() {
             </div>
             
             {/* Notification Bell */}
-            <button
-              onClick={() => {
-                const pending = bookings.filter(b => b.status === 'pending').length;
-                alert(pending > 0 ? `You have ${pending} pending consultation request(s).` : 'No new notifications.');
-              }}
-              className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04] relative"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              {bookings.filter(b => b.status === 'pending').length > 0 && (
-                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
-                  {bookings.filter(b => b.status === 'pending').length}
-                </span>
-              )}
-            </button>
-            
+            <div className="relative" ref={notificationsRef}>
+              <button
+                onClick={() => setShowNotifications(prev => !prev)}
+                className="p-2 text-gray-500 hover:text-black transition-colors rounded-full bg-black/[0.02] border border-black/[0.04] relative"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {pendingBookings.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-rose-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center">
+                    {pendingBookings.length}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-80 sm:w-96 max-h-[28rem] overflow-y-auto bg-white rounded-2xl shadow-xl border border-black/[0.06] z-50"
+                  >
+                    <div className="px-5 py-4 border-b border-black/[0.06] flex items-center justify-between">
+                      <h4 className="text-sm font-bold" style={{ color: C.forestGreen }}>Consultation Requests</h4>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                        {pendingBookings.length} pending
+                      </span>
+                    </div>
+
+                    {pendingBookings.length === 0 ? (
+                      <p className="text-xs text-gray-400 text-center py-8 px-5">No new notifications.</p>
+                    ) : (
+                      <div className="divide-y divide-black/[0.05]">
+                        {pendingBookings.map(b => (
+                          <div key={b.id} className="px-5 py-4 space-y-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-bold" style={{ color: C.forestGreen }}>{b.firstName} {b.lastName}</p>
+                                <p className="text-[11px] text-gray-500">{SPECIALTY_LABELS[b.specialty] || b.specialty || 'General Inquiry'}</p>
+                              </div>
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 whitespace-nowrap">
+                                {b.status || 'pending'}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-gray-500 space-y-0.5">
+                              {b.preferredDate && <p>Preferred: {b.preferredDate}</p>}
+                              <p>{b.email}</p>
+                              <p>{b.phone}</p>
+                            </div>
+                            {b.message && (
+                              <p className="text-[11px] text-gray-600 italic bg-black/[0.02] rounded-lg px-3 py-2">"{b.message}"</p>
+                            )}
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                onClick={() => updateBookingStatus(b.id, 'confirmed')}
+                                disabled={updatingBookingId === b.id}
+                                className="flex-1 text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-full text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                                style={{ backgroundColor: C.forestGreen }}
+                              >
+                                Confirm
+                              </button>
+                              <button
+                                onClick={() => updateBookingStatus(b.id, 'declined')}
+                                disabled={updatingBookingId === b.id}
+                                className="flex-1 text-[10px] font-bold uppercase tracking-wider py-1.5 rounded-full border border-black/[0.1] text-gray-500 hover:text-black transition-colors disabled:opacity-50"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => { setShowNotifications(false); setActiveTab('Analytics'); }}
+                      className="w-full text-[10px] font-bold uppercase tracking-wider py-3 border-t border-black/[0.06] hover:bg-black/[0.02] transition-colors"
+                      style={{ color: C.gold }}
+                    >
+                      View All Requests
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {/* Help */}
             <a
               href="https://github.com/anomalyco/opencode/issues"
